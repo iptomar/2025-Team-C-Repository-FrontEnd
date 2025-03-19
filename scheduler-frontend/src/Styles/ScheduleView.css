@@ -1,0 +1,54 @@
+/* Estilização geral */
+.ScheduleView {
+    text-align: center;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+/* Estilização da tabela */
+.schedule-table {
+    width: 50%;
+    border-collapse: collapse;
+    background: #ffffff;
+}
+
+.schedule-table th, .schedule-table td {
+    border: 1px solid #bdc3c7;
+    padding: 10px;
+    text-align: center;
+}
+
+.schedule-table th {
+    background-color: #34495e;
+    color: white;
+}
+
+/* Células do horário */
+.schedule-cell {
+    min-width: 150px;
+    height: 25px;
+    position: relative;
+}
+
+/* Blocos de horário (drag & drop) */
+.schedule-block {
+    background-color: #3498db;
+    color: white;
+    padding: 8px;
+    border-radius: 5px;
+    cursor: grab;
+    width: 90%;
+    margin: auto;
+    text-align: center;
+    transition: transform 0.2s ease-in-out;
+}
+
+.schedule-block:active {
+    cursor: grabbing;
+    transform: scale(1.05);
+}
+
+/* Melhor visibilidade ao arrastar */
+.schedule-block.dragging {
+    opacity: 0.5;
+}
