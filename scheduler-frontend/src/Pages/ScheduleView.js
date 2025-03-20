@@ -53,18 +53,18 @@ function ScheduleView() {
     return (
         // Ativa o contexto Drag & Drop para os componentes filhos
         <DndProvider backend={HTML5Backend}>
+            <div className="container">
             <div className="ScheduleView">
-            <button onClick={addTestBlock}>Adicionar Bloco de Teste</button>
                 <table className="schedule-table">
                     <thead>
                         <tr>
-                            <th>Hora</th>
-                            <th>Segunda</th>
-                            <th>Terça</th>
-                            <th>Quarta</th>
-                            <th>Quinta</th>
-                            <th>Sexta</th>
-                            <th>Sábado</th>
+                            <th className="schedule-header">HORAS</th>
+                            <th className="schedule-header">SEGUNDA</th>
+                            <th className="schedule-header">TERÇA</th>
+                            <th className="schedule-header">QUARTA</th>
+                            <th className="schedule-header">QUINTA</th>
+                            <th className="schedule-header">SEXTA</th>
+                            <th className="schedule-header">SÁBADO</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -86,6 +86,11 @@ function ScheduleView() {
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            <div className="SideBar">
+                <button onClick={addTestBlock}>Adicionar Bloco de Teste</button>
+            </div>
             </div>
         </DndProvider>
     );
