@@ -45,10 +45,15 @@ function ScheduleView() {
     // FUNÇÃO PARA ADICIONAR UM BLOCO DE TESTE (TEMPORARIO)
     const addTestBlock = () => {
         const updatedSchedule = { ...schedule };
-        updatedSchedule["segunda"][2] = "Novo Bloco de Teste"; // Adiciona o bloco na segunda-feira às 09:30 - 10:00
+        updatedSchedule["segunda"][2] = `${disciplina} ${professor} ${sala}`; // Adiciona o bloco na segunda-feira às 09:30 - 10:00
         setSchedule(updatedSchedule);
     };
-    
+
+    const [professor, setProfessor] = useState("");
+    const [sala, setSala] = useState("");
+    const [disciplina, setDisciplina] = useState("");
+
+    // -----------------------------------------------------
 
     return (
         // Ativa o contexto Drag & Drop para os componentes filhos
@@ -90,6 +95,10 @@ function ScheduleView() {
 
             <div className="SideBar">
                 <button onClick={addTestBlock}>Adicionar Bloco de Teste</button>
+                {/* Lista - Professores > Sala > Criação do Bloco */}
+                <input type="text" placeholder="Professor" value={professor} onChange={(e)=> setProfessor(e.target.value)} />
+                <input type="text" placeholder="Sala" value={sala} onChange={(e)=> setSala(e.target.value)}  />
+                <input type="text" placeholder="Disciplina" value={disciplina} onChange={(e)=> setDisciplina(e.target.value)}/>
             </div>
             </div>
         </DndProvider>
