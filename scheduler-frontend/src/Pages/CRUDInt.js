@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import "../Styles/CRUDInt.css";
 
 function CRUDInt() {
   // Estados para armazenar os dados
