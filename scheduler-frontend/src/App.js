@@ -1,23 +1,21 @@
 import logo from './logo.svg';
 import './App.css';
+import { BrowserRouter as Router, Route, Switch, Link } from 'react-router-dom';
+import CRUD from './Pages/CRUDInt';
 
 function App() {
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Router>
+        <nav>
+          {/* Ajustar o caminho do Link para corresponder à rota */}
+          <Link to="/ApiCRUDInt">CRUD</Link>
+        </nav>
+        <Switch>
+          {/* Ajustar o caminho da rota para corresponder ao Link */}
+          <Route path="/ApiCRUDInt" component={CRUD} />
+        </Switch>
+      </Router>
     </div>
   );
 }
