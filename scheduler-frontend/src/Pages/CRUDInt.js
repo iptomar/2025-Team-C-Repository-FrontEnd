@@ -8,46 +8,46 @@ function CRUDInt() {
   const [turmas, setTurmas] = useState([]);
   const [salas, setSalas] = useState([]);
 
-  // Estados para os inputs
+  // Estados para os inputs e seleção
   const [input, setInput] = useState("");
-  const [editIndex, setEditIndex] = useState(null); // Índice do item a ser editado
-  const [editType, setEditType] = useState(""); // Tipo do item a ser editado
+  const [selectedItem, setSelectedItem] = useState(null); // Índice do item selecionado
+  const [selectedType, setSelectedType] = useState(""); // Tipo do item selecionado
 
   // Função para adicionar ou editar um item
-  const handleAddOrEdit = (type) => {
+  const handleAddOrEdit = () => {
     if (input.trim() === "") return;
 
-    if (editIndex !== null) {
+    if (selectedItem !== null) {
       // Editar item existente
-      switch (type) {
+      switch (selectedType) {
         case "professores":
           const updatedProfessores = [...professores];
-          updatedProfessores[editIndex] = input;
+          updatedProfessores[selectedItem] = input;
           setProfessores(updatedProfessores);
           break;
         case "disciplinas":
           const updatedDisciplinas = [...disciplinas];
-          updatedDisciplinas[editIndex] = input;
+          updatedDisciplinas[selectedItem] = input;
           setDisciplinas(updatedDisciplinas);
           break;
         case "turmas":
           const updatedTurmas = [...turmas];
-          updatedTurmas[editIndex] = input;
+          updatedTurmas[selectedItem] = input;
           setTurmas(updatedTurmas);
           break;
         case "salas":
           const updatedSalas = [...salas];
-          updatedSalas[editIndex] = input;
+          updatedSalas[selectedItem] = input;
           setSalas(updatedSalas);
           break;
         default:
           break;
       }
-      setEditIndex(null); // Limpar o índice de edição
-      setEditType(""); // Limpar o tipo de edição
+      setSelectedItem(null); // Limpar seleção
+      setSelectedType("");
     } else {
       // Adicionar novo item
-      switch (type) {
+      switch (selectedType) {
         case "professores":
           setProfessores([...professores, input]);
           break;
@@ -68,50 +68,55 @@ function CRUDInt() {
   };
 
   // Função para remover um item
-  const handleRemove = (type, index) => {
-    switch (type) {
+  const handleRemove = () => {
+    if (selectedItem === null) return;
+
+    switch (selectedType) {
       case "professores":
-        setProfessores(professores.filter((_, i) => i !== index));
+        setProfessores(professores.filter((_, i) => i !== selectedItem));
         break;
       case "disciplinas":
-        setDisciplinas(disciplinas.filter((_, i) => i !== index));
+        setDisciplinas(disciplinas.filter((_, i) => i !== selectedItem));
         break;
       case "turmas":
-        setTurmas(turmas.filter((_, i) => i !== index));
+        setTurmas(turmas.filter((_, i) => i !== selectedItem));
         break;
       case "salas":
-        setSalas(salas.filter((_, i) => i !== index));
+        setSalas(salas.filter((_, i) => i !== selectedItem));
         break;
       default:
         break;
     }
+    setSelectedItem(null);
+    setSelectedType("");
   };
 
-  // Função para carregar um item no campo de input para edição
-  const handleEdit = (type, index) => {
-    switch (type) {
-      case "professores":
-        setInput(professores[index]);
-        break;
-      case "disciplinas":
-        setInput(disciplinas[index]);
-        break;
-      case "turmas":
-        setInput(turmas[index]);
-        break;
-      case "salas":
-        setInput(salas[index]);
-        break;
-      default:
-        break;
-    }
-    setEditIndex(index); // Definir o índice do item a ser editado
-    setEditType(type); // Definir o tipo do item a ser editado
+  // Função para selecionar um item
+  const handleSelect = (type, index) => {
+    setSelectedItem(index);
+    setSelectedType(type);
+    setInput(
+      type === "professores"
+        ? professores[index]
+        : type === "disciplinas"
+        ? disciplinas[index]
+        : type === "turmas"
+        ? turmas[index]
+        : salas[index]
+    );
   };
 
   return (
     <div style={{ padding: "20px" }}>
       <h1>Gestão de Professores, Disciplinas, Turmas e Salas</h1>
+
+      {/* Botões para selecionar a secção */}
+      <div style={{ marginBottom: "20px" }}>
+        <button onClick={() => setSelectedType("professores")}>Professores</button>
+        <button onClick={() => setSelectedType("disciplinas")}>Disciplinas</button>
+        <button onClick={() => setSelectedType("turmas")}>Turmas</button>
+        <button onClick={() => setSelectedType("salas")}>Salas</button>
+      </div>
 
       {/* Campo de input */}
       <input
@@ -122,62 +127,64 @@ function CRUDInt() {
         style={{ marginRight: "10px", padding: "5px" }}
       />
 
-      {/* Botões para adicionar ou editar itens */}
-      <button onClick={() => handleAddOrEdit(editType || "professores")}>
-        {editIndex !== null ? "Editar Professor" : "Adicionar Professor"}
+      {/* Botões globais */}
+      <button onClick={handleAddOrEdit}>
+        {selectedItem !== null ? "Editar Item" : "Adicionar Item"}
       </button>
-      <button onClick={() => handleAddOrEdit(editType || "disciplinas")}>
-        {editIndex !== null ? "Editar Disciplina" : "Adicionar Disciplina"}
-      </button>
-      <button onClick={() => handleAddOrEdit(editType || "turmas")}>
-        {editIndex !== null ? "Editar Turma" : "Adicionar Turma"}
-      </button>
-      <button onClick={() => handleAddOrEdit(editType || "salas")}>
-        {editIndex !== null ? "Editar Sala" : "Adicionar Sala"}
+      <button onClick={handleRemove} disabled={selectedItem === null}>
+        Remover Item
       </button>
 
       {/* Listas de itens */}
       <div style={{ marginTop: "20px" }}>
         <h2>Professores</h2>
-        <ul>
+        <ul className="scrollable-list">
           {professores.map((professor, index) => (
-            <li key={index}>
-              {professor}{" "}
-              <button onClick={() => handleEdit("professores", index)}>Editar</button>
-              <button onClick={() => handleRemove("professores", index)}>Remover</button>
+            <li
+              key={index}
+              onClick={() => handleSelect("professores", index)}
+              className={selectedItem === index && selectedType === "professores" ? "selected" : ""}
+            >
+              {professor}
             </li>
           ))}
         </ul>
 
         <h2>Disciplinas</h2>
-        <ul>
+        <ul className="scrollable-list">
           {disciplinas.map((disciplina, index) => (
-            <li key={index}>
-              {disciplina}{" "}
-              <button onClick={() => handleEdit("disciplinas", index)}>Editar</button>
-              <button onClick={() => handleRemove("disciplinas", index)}>Remover</button>
+            <li
+              key={index}
+              onClick={() => handleSelect("disciplinas", index)}
+              className={selectedItem === index && selectedType === "disciplinas" ? "selected" : ""}
+            >
+              {disciplina}
             </li>
           ))}
         </ul>
 
         <h2>Turmas</h2>
-        <ul>
+        <ul className="scrollable-list">
           {turmas.map((turma, index) => (
-            <li key={index}>
-              {turma}{" "}
-              <button onClick={() => handleEdit("turmas", index)}>Editar</button>
-              <button onClick={() => handleRemove("turmas", index)}>Remover</button>
+            <li
+              key={index}
+              onClick={() => handleSelect("turmas", index)}
+              className={selectedItem === index && selectedType === "turmas" ? "selected" : ""}
+            >
+              {turma}
             </li>
           ))}
         </ul>
 
         <h2>Salas</h2>
-        <ul>
+        <ul className="scrollable-list">
           {salas.map((sala, index) => (
-            <li key={index}>
-              {sala}{" "}
-              <button onClick={() => handleEdit("salas", index)}>Editar</button>
-              <button onClick={() => handleRemove("salas", index)}>Remover</button>
+            <li
+              key={index}
+              onClick={() => handleSelect("salas", index)}
+              className={selectedItem === index && selectedType === "salas" ? "selected" : ""}
+            >
+              {sala}
             </li>
           ))}
         </ul>
