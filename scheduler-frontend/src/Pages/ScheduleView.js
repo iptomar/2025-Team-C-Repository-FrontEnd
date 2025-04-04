@@ -48,6 +48,24 @@ function ScheduleView() {
         updatedSchedule["segunda"][2] = `${disciplina} ${professor} ${sala}`; // Adiciona o bloco na segunda-feira às 09:30 - 10:00
         setSchedule(updatedSchedule);
     };
+    // Função para verificar se um professor ultrapassa 6 horas seguidas
+    const tooManyClasses = (day, startIndex, professor) => {
+        const maxConsecutiveSlots = 12; // Como cada slot é 30 min 12 slots fazem 6 horas
+
+        let consecutiveCount = 0; //Inicia contagem de slots consecutivos
+
+        for(let i=0;i < schedule[day].length; i++){
+            if (schedule[day][i]?.includes(professor)) {
+                consecutiveCount++;
+                if (consecutiveCount > maxConsecutiveSlots){
+                    return true; // Se o professor tem 6 ou mais horas seguidas de aulas este retorna true
+                }
+            } else{
+                consecutiveCount = 0; // Voltar a 0 se existe uma lacuna
+            }
+        }
+        return false;
+    }
 
     const [professor, setProfessor] = useState("");
     const [sala, setSala] = useState("");
