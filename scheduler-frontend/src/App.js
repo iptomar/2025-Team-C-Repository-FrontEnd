@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Switch, Link } from 'react-router-dom';
 import './App.css';
+import logo from './logoipt.png';
 //import Login from './Pages/Login'; // Página de Login
 //import CRUDInt from './Pages/CRUDInt'; // Página de CRUD
 
@@ -9,6 +10,7 @@ function App() {
     <Router>
       <div className="App">
         <header className="App-header">
+          <img src={logo} alt="Logotipo Gestão de Horários" className="App-logo" />
           <h1>Gestão de Horários</h1>
           <p>Bem-vindo à aplicação de gestão de horários.</p>
           <div className="button-container">
