@@ -1,20 +1,37 @@
-import React, { useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import "../Styles/Login.css";
+import { loginUser } from "../services/authService";
 
 function Login() {
   // Definir estados para email e password
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Função para lidar com o envio do formulário
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    // Verificar se o utilizador já está autenticado
+    const token = localStorage.getItem("token");
+    if (token) {
+      // Se já estiver autenticado, redirecionar para a página de criação de horários
+      window.location.href = "/schedule";
+    }
+  });
+
+  // Função para fazer login
+  const handleLogin = async (e) => {
     e.preventDefault();
-    console.log(email, password);
+    try {
+      const token = await loginUser(email, password);
+      alert('Login feito com sucesso!');
+      // Redirecionar para a página da criação de horários
+      window.location.href = "/schedule";
+    } catch (error) {
+      alert(`Erro: ${error.message}`);
+    }
   };
 
   return (
     <div className="login-container">
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleLogin}>
         <h2>Login</h2>
         <input
           type="email"
