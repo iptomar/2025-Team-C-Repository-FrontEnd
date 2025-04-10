@@ -1,85 +1,50 @@
 .container {
     display: flex;
-    align-items: center;
+    justify-content: flex-start; /* Move a SideBar para a esquerda */
+    align-items: flex-start;
+    gap: 20px; /* Espaçamento horizontal entre a SideBar e a ScheduleView */
+    padding: 20px;
 }
 
-/* Estilização geral */
 .ScheduleView {
     padding: 20px;
     font-family: Arial, sans-serif;
-    width: 75%;
+    width: 80%; /* Aumenta a largura da tabela de horários */
     display: flex;
+    flex-direction: column;
+    margin: auto;
 }
 
-/* Cabeçalho do horário */
-.schedule-header {
-    text-align: left;
-    font-size: 14px;
-    font-weight: bold;
+.SideBar {
+    width: 20%; /* Define a largura da barra lateral */
+    background-color: #f4f4f4; /* Fundo cinzento */
+    padding: 15px 20px; /* Espaçamento interno */
+    border: 1px solid #ccc;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centraliza os elementos horizontalmente */
+    justify-content: flex-start; /* Alinha os elementos no topo */
+    gap: 15px; /* Espaçamento vertical entre os elementos */
+    order: -1; /* Move a SideBar para a esquerda */
 }
 
-/* Estilização da tabela */
 .schedule-table {
     width: 100%;
     border-collapse: collapse;
     background: #ffffff;
-    font-size: 12px;
+    font-size: 14px; /* Aumenta o tamanho da fonte */
+    margin: auto;
 }
 
 .schedule-table th, .schedule-table td {
-    border: 01px solid black;
-    padding: 5px;
+    border: 1px solid black;
+    padding: 10px; /* Aumenta o espaçamento interno das células */
 }
 
-/* Estilo dos cabeçalhos */
 .schedule-table th {
     background-color: #e0e0e065;
     color: rgb(96, 96, 96);
     font-weight: bold;
     text-align: left;
 }
-
-/* Células do horário */
-.schedule-cell {
-    min-width: 100px;
-    height: 30px;
-    position: relative;
-}
-
-/* Blocos de horário (aulas) */
-.schedule-block {
-    background-color: #ffffff;
-    border: 2px solid black;
-    color: black;
-    font-size: 11px;
-    font-weight: bold;
-    padding: 0px;
-    text-align: center;
-    margin: auto;
-    width: 100%;
-    height: 100%;
-}
-
-/* Melhor visibilidade ao arrastar */
-.schedule-block.dragging {
-    opacity: 0.7;
-}
-
-/* Alinhamento dos horários */
-.time-column {
-    text-align: left;
-    font-weight: bold;
-}
-
-/* Barra lateral */
-.SideBar {
-    width: 25%;
-    background-color: #f4f4f4;
-    padding: 15px;
-    border: 1px solid #ccc;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    gap: 1vh;
-}
-

@@ -1,6 +1,7 @@
 import React, { use, useEffect, useState } from "react";
 import "../Styles/Login.css";
 import { loginUser } from "../services/authService";
+import logo from '../Assets/logoipt.png';
 
 function Login() {
   // Definir estados para email e password
@@ -32,6 +33,7 @@ function Login() {
   return (
     <div className="login-container">
       <form onSubmit={handleLogin}>
+      <img src={logo} alt="Logotipo" className="login-logo" />
         <h2>Login</h2>
         <input
           type="email"
@@ -45,7 +47,7 @@ function Login() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button type="submit">Login</button>
+        <button type="submit">Entrar</button>
       </form>
     </div>
   );

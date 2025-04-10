@@ -11,9 +11,6 @@ function App() {
     <div className="App">
       <Router>
         {/* Navegação para a página de login */}
-        <nav>
-          <Link to="/login">Login</Link>
-        </nav>
         <Switch>
           {/* Rota para a página de login */}
           <Route path="/login" component={Login} />
