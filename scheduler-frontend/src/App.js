@@ -5,7 +5,14 @@ import logo from './logoipt.png';
 //import Login from './Pages/Login'; // Página de Login
 //import CRUDInt from './Pages/CRUDInt'; // Página de CRUD
 
+import { BrowserRouter as Router, Route, Switch, Link } from 'react-router-dom';
+import Login from './Pages/Login';
+import ScheduleView from "./Pages/ScheduleView";
+import { useEffect, useState } from 'react';
+
+
 function App() {
+
   return (
     <Router>
       <div className="App">
