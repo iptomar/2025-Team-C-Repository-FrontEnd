@@ -14,6 +14,12 @@ import { useEffect, useState } from 'react';
 function App() {
 
   return (
+
+    <div className="App">
+      <Router>
+        {/* Navegação para a página de login */}
+        <Switch>
+          {/* Rota para a página de login */}
     <Router>
       <div className="App">
         <header className="App-header">

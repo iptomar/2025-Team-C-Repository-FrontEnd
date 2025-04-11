@@ -3,8 +3,9 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: white;
     font-family: Arial, sans-serif;
+    font-size: 40px;
     margin: 0;
   }
   
@@ -18,11 +19,11 @@ body {
   
   form {
     background: white;
-    padding: 2rem;
+    padding:4rem 8rem;
     border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
     text-align: center;
-    max-width: 320px;
+    max-width: 450px;
     width: 100%;
     margin: auto;
     display: flex;
@@ -32,25 +33,25 @@ body {
   
   input {
     width: 100%;
-    padding: 10px;
-    margin: 10px 0;
+    padding: 20px;
+    margin: 14px 0;
     border: 1px solid #ccc;
     border-radius: 5px;
-    font-size: 16px;
+    font-size: 25px;
   }
   
   button {
     width: 100%;
-    padding: 10px;
-    background: #667eea;
+    padding: 24px;
+    background: rgb(87, 187, 76);
     border: none;
     color: white;
-    font-size: 18px;
+    font-size: 30px;
     border-radius: 5px;
     cursor: pointer;
     transition: background 0.3s;
   }
   
   button:hover {
-    background: #5648a1;
+    background: #0d6217;
   }
