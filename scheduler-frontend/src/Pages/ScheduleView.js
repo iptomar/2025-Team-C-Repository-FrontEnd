@@ -28,11 +28,12 @@ function ScheduleView() {
             <div className="ScheduleView">
                 <FullCalendar
                     plugins={[timeGridPlugin, interactionPlugin]}
+                    locale="pt"
                     initialView="timeGridWeek"
                     headerToolbar={{
-                        left: '',
+                        left: 'prev',
                         center: 'title',
-                        right: ''
+                        right: 'next'
                     }}
                     allDaySlot={false}
                     slotMinTime="08:30:00"
