@@ -9,13 +9,15 @@
 .ScheduleView {
     padding: 20px;
     font-family: Arial, sans-serif;
-    width: 80%; /* Aumenta a largura da tabela de horários */
+    width: 85%; /* Aumenta a largura da tabela de horários */
     display: flex;
     flex-direction: column;
     margin: auto;
+    scale: 0.9;
 }
 
 .SideBar {
+    margin-top: 23vh;
     width: 20%; /* Define a largura da barra lateral */
     background-color: #f4f4f4; /* Fundo cinzento */
     padding: 15px 20px; /* Espaçamento interno */
@@ -27,24 +29,4 @@
     justify-content: flex-start; /* Alinha os elementos no topo */
     gap: 15px; /* Espaçamento vertical entre os elementos */
     order: -1; /* Move a SideBar para a esquerda */
-}
-
-.schedule-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: #ffffff;
-    font-size: 14px; /* Aumenta o tamanho da fonte */
-    margin: auto;
-}
-
-.schedule-table th, .schedule-table td {
-    border: 1px solid black;
-    padding: 10px; /* Aumenta o espaçamento interno das células */
-}
-
-.schedule-table th {
-    background-color: #e0e0e065;
-    color: rgb(96, 96, 96);
-    font-weight: bold;
-    text-align: left;
 }

@@ -52,6 +52,8 @@ function ScheduleView() {
                         );
                         setEvents(updatedEvents);
                     }}
+                    hiddenDays={[0]} // Esconde o domingo (0 é o índice do domingo)
+                    
                 />
             </div>
 
