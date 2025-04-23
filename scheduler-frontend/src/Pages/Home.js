@@ -13,7 +13,7 @@ function Home() {
 
       <div className="button-container">
         <Link to="/login">
-          <button className="main-button">Login</button>
+          <button className="main-button">Iniciar Sessão</button>
         </Link>
       </div>
     </header>

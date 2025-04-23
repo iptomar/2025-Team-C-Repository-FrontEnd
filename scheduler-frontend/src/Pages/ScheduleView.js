@@ -1,85 +1,188 @@
-import React, { useState } from "react";
-import FullCalendar from "@fullcalendar/react";
-import timeGridPlugin from "@fullcalendar/timegrid";
-import interactionPlugin from "@fullcalendar/interaction";
+import React, { useState } from 'react';
+import FullCalendar from '@fullcalendar/react';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import ptLocale from '@fullcalendar/core/locales/pt'; // Importar a localização em português
 import "../Styles/ScheduleView.css";
 
-function ScheduleView() {
+const ScheduleView = () => {
     const [events, setEvents] = useState([]);
+    const [teacher, setTeacher] = useState('');
+    const [room, setRoom] = useState('');
+    const [subject, setSubject] = useState('');
 
-    const [professor, setProfessor] = useState("");
-    const [sala, setSala] = useState("");
-    const [disciplina, setDisciplina] = useState("");
+    const handleDateClick = (info) => {
+        // aceitar criação de blocos apenas se todos os campos estiverem preenchidos
+        if (teacher && room && subject) {
+            // criar um horário de início corretamente alinhado a partir da data clicada
+            const clickTime = new Date(info.dateStr);
+            
+            // criar um horário de fim 2 horas após o horário de início
+            const endTime = new Date(clickTime);
+            endTime.setHours(endTime.getHours() + 2);
+            
+            const newEvent = {
+                id: Date.now(),
+                title: `${subject} - ${teacher} - ${room}`,
+                start: clickTime,
+                end: endTime,
+                extendedProps: {
+                    teacher,
+                    room,
+                    subject
+                },
+                backgroundColor: '#57BB4C',
+                borderColor: '#0d6217'
+            };
+            
+            setEvents([...events, newEvent]);
+        } else {
+            alert('Por favor, preencha todos os campos antes de criar um bloco');
+        }
+    };
 
-    const addTestBlock = () => {
-        if (!disciplina || !professor || !sala) return;
+    const handleEventDrop = (info) => {
+        const updatedEvents = events.map(event => {
+            if (event.id === parseInt(info.event.id)) {
+                return {
+                    ...event,
+                    start: info.event.start,
+                    end: info.event.end
+                };
+            }
+            return event;
+        });
+        setEvents(updatedEvents);
+    };
 
-        const newEvent = {
-            title: `${disciplina} - ${professor} (${sala})`,
-            start: "2025-04-17T09:30:00", // Data e hora de início
-            end: "2025-04-17T12:00:00",   // Data e hora de fim
+    const handleEventResize = (info) => {
+        const updatedEvents = events.map(event => {
+            if (event.id === parseInt(info.event.id)) {
+                return {
+                    ...event,
+                    start: info.event.start,
+                    end: info.event.end
+                };
+            }
+            return event;
+        });
+        setEvents(updatedEvents);
+    };
+
+    const handleDeleteEvent = (eventId) => {
+        setEvents(prevEvents => prevEvents.filter(event => event.id !== eventId));
+    };
+
+    const slotLabelFormatter = (slotInfo) => {
+        const start = new Date(slotInfo.date);
+        const end = new Date(start);
+        end.setMinutes(end.getMinutes() + 30);
+        
+        const formatTime = (date) => {
+            let hours = date.getHours();
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            return `${hours}:${minutes}`;
         };
-
-        setEvents([...events, newEvent]);
+        
+        return `${formatTime(start)} - ${formatTime(end)}`;
     };
 
     return (
         <div className="container">
+            <div className="SideBar">
+                <h2>Criar Bloco</h2>
+                <div className="form-group">
+                    <label htmlFor="teacher">Professor:</label>
+                    <input 
+                        type="text" 
+                        id="teacher"
+                        value={teacher}
+                        onChange={(e) => setTeacher(e.target.value)}
+                        placeholder="Introduza o nome do professor"
+                    />
+                </div>
+                <div className="form-group">
+                    <label htmlFor="room">Sala:</label>
+                    <input 
+                        type="text" 
+                        id="room"
+                        value={room}
+                        onChange={(e) => setRoom(e.target.value)}
+                        placeholder="Introduza o número da sala"
+                    />
+                </div>
+                <div className="form-group">
+                    <label htmlFor="subject">Disciplina:</label>
+                    <input 
+                        type="text" 
+                        id="subject"
+                        value={subject}
+                        onChange={(e) => setSubject(e.target.value)}
+                        placeholder="Introduza o nome da disciplina"
+                    />
+                </div>
+                
+                <div className="blocks-preview">
+                    <h3>Blocos Atuais</h3> 
+                    <p className="instructions">Preencha os campos acima e clique no calendário para criar um bloco</p>
+                    <div className="events-list">
+                        {events.length > 0 ? (
+                            events.map((event) => (
+                                <div key={event.id} className="event-item">
+                                    <span>{event.title}</span>
+                                    <button 
+                                        className="delete-event-btn"
+                                        onClick={() => handleDeleteEvent(event.id)}
+                                    >
+                                        x
+                                    </button>
+                                </div>
+                            ))
+                        ) : (
+                            <p>Nenhum bloco criado ainda</p>
+                        )}
+                    </div>
+                </div>
+            </div>
             <div className="ScheduleView">
                 <FullCalendar
                     plugins={[timeGridPlugin, interactionPlugin]}
-                    locale="pt"
                     initialView="timeGridWeek"
+                    locale={ptLocale}
+                    height="auto"
                     headerToolbar={{
-                        left: 'prev',
+                        left: 'prev,next today',
                         center: 'title',
-                        right: 'next'
+                        right: 'timeGridWeek,timeGridDay'
                     }}
-                    allDaySlot={false}
                     slotMinTime="08:30:00"
                     slotMaxTime="24:00:00"
-                    editable={true}
-                    droppable={true}
+                    allDaySlot={false}
                     events={events}
-                    eventDrop={(info) => {
-                        // Atualiza evento ao mover
-                        const updatedEvents = events.map(evt =>
-                            evt === info.event._def.extendedProps.ref ? {
-                                ...evt,
-                                start: info.event.start,
-                                end: info.event.end
-                            } : evt
+                    editable={true}
+                    eventDrop={handleEventDrop}
+                    eventResize={handleEventResize}
+                    dateClick={handleDateClick}
+                    slotDuration="00:30:00"
+                    slotLabelInterval="00:30:00"
+                    slotLabelContent={slotLabelFormatter}
+                    eventContent={(eventInfo) => {
+                        return (
+                            <div>
+                                <b>{eventInfo.event.extendedProps?.subject || eventInfo.event.title}</b>
+                                {eventInfo.event.extendedProps?.teacher && (
+                                    <div><i>{eventInfo.event.extendedProps.teacher}</i></div>
+                                )}
+                                {eventInfo.event.extendedProps?.room && (
+                                    <div>Sala: {eventInfo.event.extendedProps.room}</div>
+                                )}
+                            </div>
                         );
-                        setEvents(updatedEvents);
                     }}
-                    hiddenDays={[0]} // Esconde o domingo (0 é o índice do domingo)
-                    
                 />
-            </div>
-
-            <div className="SideBar">
-                <input
-                    type="text"
-                    placeholder="Professor"
-                    value={professor}
-                    onChange={(e) => setProfessor(e.target.value)}
-                />
-                <input
-                    type="text"
-                    placeholder="Sala"
-                    value={sala}
-                    onChange={(e) => setSala(e.target.value)}
-                />
-                <input
-                    type="text"
-                    placeholder="Disciplina"
-                    value={disciplina}
-                    onChange={(e) => setDisciplina(e.target.value)}
-                />
-                <button onClick={addTestBlock}>Adicionar Bloco de Teste</button>
             </div>
         </div>
     );
-}
+};
 
 export default ScheduleView;
