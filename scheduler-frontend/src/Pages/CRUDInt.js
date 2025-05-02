@@ -11,7 +11,7 @@ function CRUDInt() {
   // Estados para os inputs e seleção
   const [input, setInput] = useState("");
   const [selectedItem, setSelectedItem] = useState(null); // Índice do item selecionado
-  const [selectedType, setSelectedType] = useState(""); // Tipo do item selecionado
+  const [selectedType, setSelectedType] = useState("professores"); // Definir professores como categoria padrão
 
   // Função para adicionar ou editar um item
   const handleAddOrEdit = () => {
@@ -44,7 +44,6 @@ function CRUDInt() {
           break;
       }
       setSelectedItem(null); // Limpar seleção
-      setSelectedType("");
     } else {
       // Adicionar novo item
       switch (selectedType) {
@@ -88,7 +87,6 @@ function CRUDInt() {
         break;
     }
     setSelectedItem(null);
-    setSelectedType("");
   };
 
   // Função para selecionar um item
@@ -110,12 +108,32 @@ function CRUDInt() {
     <div style={{ padding: "20px" }}>
       <h1>Gestão de Professores, Disciplinas, Turmas e Salas</h1>
 
-      {/* Botões para selecionar a secção */}
-      <div style={{ marginBottom: "20px" }}>
-        <button onClick={() => setSelectedType("professores")}>Professores</button>
-        <button onClick={() => setSelectedType("disciplinas")}>Disciplinas</button>
-        <button onClick={() => setSelectedType("turmas")}>Turmas</button>
-        <button onClick={() => setSelectedType("salas")}>Salas</button>
+      {/* Botões para selecionar a secção com a classe category-buttons */}
+      <div className="category-buttons">
+        <button 
+          className={`category-button ${selectedType === "professores" ? "selected" : ""}`}
+          onClick={() => setSelectedType("professores")}
+        >
+          Professores
+        </button>
+        <button 
+          className={`category-button ${selectedType === "disciplinas" ? "selected" : ""}`}
+          onClick={() => setSelectedType("disciplinas")}
+        >
+          Disciplinas
+        </button>
+        <button 
+          className={`category-button ${selectedType === "turmas" ? "selected" : ""}`}
+          onClick={() => setSelectedType("turmas")}
+        >
+          Turmas
+        </button>
+        <button 
+          className={`category-button ${selectedType === "salas" ? "selected" : ""}`}
+          onClick={() => setSelectedType("salas")}
+        >
+          Salas
+        </button>
       </div>
 
       {/* Campo de input */}
