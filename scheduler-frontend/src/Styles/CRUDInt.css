@@ -1,0 +1,123 @@
+/* Estilo geral */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f9; 
+  margin: 0;
+  padding: 0;
+}
+
+/* Contêiner principal */
+div {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+  background: #ffffff; 
+  border-radius: 8px;
+}
+
+/* Botões de categoria */
+.category-buttons {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  gap: 10px;
+}
+
+.category-button {
+  padding: 10px 15px;
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.category-button:hover {
+  background-color: #e0e0e0;
+}
+
+.category-button.selected {
+  background-color: rgb(87, 187, 76);
+  color: white;
+  border-color: rgb(70, 160, 60);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Títulos */
+h1 {
+  text-align: center;
+  color: #333333;
+  margin-bottom: 20px;
+}
+
+h2 {
+  color: #444444;
+  margin-top: 20px;
+  border-bottom: 2px solid rgb(87, 187, 76); 
+  padding-bottom: 5px;
+}
+
+/* Campo de input */
+input[type="text"] {
+  width: calc(100% - 120px);
+  padding: 10px;
+  margin-right: 10px;
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+/* Botões */
+button {
+  padding: 10px 15px;
+  margin-top: 15px;
+  background-color: rgb(87, 187, 76); 
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-right: 10px;
+}
+
+button:hover {
+  background-color: rgb(70, 160, 60);
+}
+
+button:disabled {
+  background-color: #cccccc; 
+  cursor: not-allowed;
+}
+
+.scrollable-list {
+  max-height: 150px; 
+  overflow-y: auto; 
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 20px;
+  background-color: #f9f9f9;
+}
+
+.scrollable-list li {
+  padding: 8px;
+  cursor: pointer;
+  border-bottom: 1px solid #eeeeee;
+  text-align: center; 
+}
+
+.scrollable-list li:last-child {
+  border-bottom: none;
+}
+
+.scrollable-list li:hover {
+  background-color: #e0e0e0; 
+}
+
+.scrollable-list li.selected {
+  background-color: rgb(87, 187, 76); 
+  color: white;
+}
