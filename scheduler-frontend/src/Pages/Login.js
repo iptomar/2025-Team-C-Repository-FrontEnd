@@ -22,7 +22,7 @@ function Login() {
     e.preventDefault();
     try {
       const token = await loginUser(email, password);
-      alert('Login feito com sucesso!');
+      alert('Login efetuado com sucesso!');
       // Redirecionar para a página da criação de horários
       window.location.href = "/schedule";
     } catch (error) {
@@ -34,7 +34,7 @@ function Login() {
     <div className="login-container">
       <form onSubmit={handleLogin}>
       <img src={logo} alt="Logotipo" className="login-logo" />
-        <h2>Login</h2>
+        <h2>Iniciar Sessão</h2>
         <input
           type="email"
           placeholder="Email"
@@ -43,7 +43,7 @@ function Login() {
         />
         <input
           type="password"
-          placeholder="Password"
+          placeholder="Palavra-passe"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />

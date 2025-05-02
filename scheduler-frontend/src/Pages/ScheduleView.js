@@ -1,108 +1,188 @@
-import { useState } from "react";
-import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend"; 
-import '../Styles/ScheduleView.css'; 
-import Block from "../Components/Block"; 
-import Cell from "../Components/Cell";
+import React, { useState } from 'react';
+import FullCalendar from '@fullcalendar/react';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import ptLocale from '@fullcalendar/core/locales/pt'; // Importar a localização em português
+import "../Styles/ScheduleView.css";
 
-function ScheduleView() {
-    // Criar os slots de 30 em 30 minutos, das 08:30 até às 24:00
-    const timeSlots = [];
-    // Loop para gerar os slots de tempo
-    // Começa às 08:00 e termina às 24:00
-    for (let hour = 8; hour < 24; hour++) {
+const ScheduleView = () => {
+    const [events, setEvents] = useState([]);
+    const [teacher, setTeacher] = useState('');
+    const [room, setRoom] = useState('');
+    const [subject, setSubject] = useState('');
 
-        // Ciclo interno para alternar entre os minutos ":00" e ":30" para criar intervalos de 30 minutos
-        for (let min of ["00", "30"]) { 
-            let nextHour = hour; // Inicialmente, a próxima hora é igual à atual
-            let nextMin = min === "00" ? "30" : "00"; // Se os minutos forem "00", os próximos serão "30", e vice-versa
+    const handleDateClick = (info) => {
+        // aceitar criação de blocos apenas se todos os campos estiverem preenchidos
+        if (teacher && room && subject) {
+            // criar um horário de início corretamente alinhado a partir da data clicada
+            const clickTime = new Date(info.dateStr);
             
-            // Se estamos a gerar o intervalo "XX:30 - XX:00", precisamos avançar a hora
-            if (min === "30") {
-                nextHour = hour + 1;
-            }
-    
-            // Adicionamos ao array um intervalo no formato "HH:MM - HH:MM"
-            timeSlots.push(`${hour.toString().padStart(2, '0')}:${min} - ${nextHour.toString().padStart(2, '0')}:${nextMin}`);
+            // criar um horário de fim 2 horas após o horário de início
+            const endTime = new Date(clickTime);
+            endTime.setHours(endTime.getHours() + 2);
+            
+            const newEvent = {
+                id: Date.now(),
+                title: `${subject} - ${teacher} - ${room}`,
+                start: clickTime,
+                end: endTime,
+                extendedProps: {
+                    teacher,
+                    room,
+                    subject
+                },
+                backgroundColor: '#57BB4C',
+                borderColor: '#0d6217'
+            };
+            
+            setEvents([...events, newEvent]);
+        } else {
+            alert('Por favor, preencha todos os campos antes de criar um bloco');
         }
-    }
-    
-    // Estado do horário (inicialmente vazio)
-    const [schedule, setSchedule] = useState(
-        Object.fromEntries(
-            ["segunda", "terça", "quarta", "quinta", "sexta", "sábado"].map(day => [day, new Array(timeSlots.length).fill("")])
-        )
-    );
-
-    // Função para mover um bloco de um local para outro na tabela
-    const moveBlock = (fromDay, fromIndex, toDay, toIndex) => {
-        const updatedSchedule = { ...schedule }; // Copia o estado atual
-        const [movedBlock] = updatedSchedule[fromDay].splice(fromIndex, 1, ""); // Remove o bloco da posição original
-        updatedSchedule[toDay].splice(toIndex, 1, movedBlock); // Adiciona o bloco à nova posição
-        setSchedule(updatedSchedule); // Atualiza o estado com o novo horário
     };
 
-    // FUNÇÃO PARA ADICIONAR UM BLOCO DE TESTE (TEMPORARIO)
-    const addTestBlock = () => {
-        const updatedSchedule = { ...schedule };
-        updatedSchedule["segunda"][2] = `${disciplina} ${professor} ${sala}`; // Adiciona o bloco na segunda-feira às 09:30 - 10:00
-        setSchedule(updatedSchedule);
+    const handleEventDrop = (info) => {
+        const updatedEvents = events.map(event => {
+            if (event.id === parseInt(info.event.id)) {
+                return {
+                    ...event,
+                    start: info.event.start,
+                    end: info.event.end
+                };
+            }
+            return event;
+        });
+        setEvents(updatedEvents);
     };
 
-    const [professor, setProfessor] = useState("");
-    const [sala, setSala] = useState("");
-    const [disciplina, setDisciplina] = useState("");
+    const handleEventResize = (info) => {
+        const updatedEvents = events.map(event => {
+            if (event.id === parseInt(info.event.id)) {
+                return {
+                    ...event,
+                    start: info.event.start,
+                    end: info.event.end
+                };
+            }
+            return event;
+        });
+        setEvents(updatedEvents);
+    };
 
-    // -----------------------------------------------------
+    const handleDeleteEvent = (eventId) => {
+        setEvents(prevEvents => prevEvents.filter(event => event.id !== eventId));
+    };
+
+    const slotLabelFormatter = (slotInfo) => {
+        const start = new Date(slotInfo.date);
+        const end = new Date(start);
+        end.setMinutes(end.getMinutes() + 30);
+        
+        const formatTime = (date) => {
+            let hours = date.getHours();
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            return `${hours}:${minutes}`;
+        };
+        
+        return `${formatTime(start)} - ${formatTime(end)}`;
+    };
 
     return (
-        // Ativa o contexto Drag & Drop para os componentes filhos
-        <DndProvider backend={HTML5Backend}>
-            <div className="container">
-            <div className="ScheduleView">
-                <table className="schedule-table">
-                    <thead>
-                        <tr>
-                            <th className="schedule-header">HORAS</th>
-                            <th className="schedule-header">SEGUNDA</th>
-                            <th className="schedule-header">TERÇA</th>
-                            <th className="schedule-header">QUARTA</th>
-                            <th className="schedule-header">QUINTA</th>
-                            <th className="schedule-header">SEXTA</th>
-                            <th className="schedule-header">SÁBADO</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {/* Gera as linhas da tabela com os horários */}
-                        {timeSlots.map((time, rowIndex) => (
-                            <tr key={rowIndex}>
-                                <td>{time}</td> {/* Mostra o intervalo de tempo */}
-                                {/* Gera as células da tabela para cada dia da semana */}
-                                {Object.keys(schedule).map((day) => (
-                                    <Cell 
-                                        key={day} 
-                                        day={day} 
-                                        rowIndex={rowIndex} 
-                                        block={schedule[day][rowIndex]} 
-                                        moveBlock={moveBlock} 
-                                    />
-                                ))}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-
+        <div className="container">
             <div className="SideBar">
-                <button onClick={addTestBlock}>Adicionar Bloco de Teste</button>
-                {/* Lista - Professores > Sala > Criação do Bloco */}
-                <input type="text" placeholder="Professor" value={professor} onChange={(e)=> setProfessor(e.target.value)} />
-                <input type="text" placeholder="Sala" value={sala} onChange={(e)=> setSala(e.target.value)}  />
-                <input type="text" placeholder="Disciplina" value={disciplina} onChange={(e)=> setDisciplina(e.target.value)}/>
+                <h2>Criar Bloco</h2>
+                <div className="form-group">
+                    <label htmlFor="teacher">Professor:</label>
+                    <input 
+                        type="text" 
+                        id="teacher"
+                        value={teacher}
+                        onChange={(e) => setTeacher(e.target.value)}
+                        placeholder="Introduza o nome do professor"
+                    />
+                </div>
+                <div className="form-group">
+                    <label htmlFor="room">Sala:</label>
+                    <input 
+                        type="text" 
+                        id="room"
+                        value={room}
+                        onChange={(e) => setRoom(e.target.value)}
+                        placeholder="Introduza o número da sala"
+                    />
+                </div>
+                <div className="form-group">
+                    <label htmlFor="subject">Disciplina:</label>
+                    <input 
+                        type="text" 
+                        id="subject"
+                        value={subject}
+                        onChange={(e) => setSubject(e.target.value)}
+                        placeholder="Introduza o nome da disciplina"
+                    />
+                </div>
+                
+                <div className="blocks-preview">
+                    <h3>Blocos Atuais</h3> 
+                    <p className="instructions">Preencha os campos acima e clique no calendário para criar um bloco</p>
+                    <div className="events-list">
+                        {events.length > 0 ? (
+                            events.map((event) => (
+                                <div key={event.id} className="event-item">
+                                    <span>{event.title}</span>
+                                    <button 
+                                        className="delete-event-btn"
+                                        onClick={() => handleDeleteEvent(event.id)}
+                                    >
+                                        x
+                                    </button>
+                                </div>
+                            ))
+                        ) : (
+                            <p>Nenhum bloco criado ainda</p>
+                        )}
+                    </div>
+                </div>
             </div>
+            <div className="ScheduleView">
+                <FullCalendar
+                    plugins={[timeGridPlugin, interactionPlugin]}
+                    initialView="timeGridWeek"
+                    locale={ptLocale}
+                    height="auto"
+                    headerToolbar={{
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'timeGridWeek,timeGridDay'
+                    }}
+                    slotMinTime="08:30:00"
+                    slotMaxTime="24:00:00"
+                    allDaySlot={false}
+                    events={events}
+                    editable={true}
+                    eventDrop={handleEventDrop}
+                    eventResize={handleEventResize}
+                    dateClick={handleDateClick}
+                    slotDuration="00:30:00"
+                    slotLabelInterval="00:30:00"
+                    slotLabelContent={slotLabelFormatter}
+                    eventContent={(eventInfo) => {
+                        return (
+                            <div>
+                                <b>{eventInfo.event.extendedProps?.subject || eventInfo.event.title}</b>
+                                {eventInfo.event.extendedProps?.teacher && (
+                                    <div><i>{eventInfo.event.extendedProps.teacher}</i></div>
+                                )}
+                                {eventInfo.event.extendedProps?.room && (
+                                    <div>Sala: {eventInfo.event.extendedProps.room}</div>
+                                )}
+                            </div>
+                        );
+                    }}
+                />
             </div>
-        </DndProvider>
+        </div>
     );
-}
+};
 
-export default ScheduleView; 
+export default ScheduleView;
