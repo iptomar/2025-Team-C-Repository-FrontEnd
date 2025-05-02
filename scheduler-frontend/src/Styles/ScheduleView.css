@@ -1,0 +1,211 @@
+.container {
+    display: flex;
+    justify-content: flex-start;
+    align-items: stretch; 
+    gap: 20px;
+    height: 100vh; 
+    padding: 20px; 
+    box-sizing: border-box;
+}
+
+.ScheduleView {
+    flex-grow: 1;
+    display: flex; 
+    flex-direction: column; 
+    overflow: hidden;
+    box-sizing: border-box; 
+}
+
+.fc-timegrid-slot {
+    height: 25px !important;
+}
+
+.fc-timegrid-slots td {
+    font-size: 1.2rem;
+}
+
+.SideBar {
+    width: 250px;
+    min-width: 250px;
+    background-color: #f4f4f4;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    display: flex; 
+    flex-direction: column;
+    overflow: visible;
+}
+
+.SideBar h2, .SideBar h3 {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+    color: #333;
+}
+
+/* Form group styling */
+.form-group {
+    margin-bottom: 10px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    margin-bottom: 3px;
+    font-weight: 600;
+    color: #555;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    box-sizing: border-box;
+}
+
+.instructions {
+    font-size: 0.75rem;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.blocks-preview {
+    flex-grow: 1; 
+    display: flex; 
+    flex-direction: column; 
+    min-height: 0; 
+    margin-top: 15px; 
+    overflow: visible; 
+}
+
+.events-list {
+    flex-grow: 1;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 5px;
+    background-color: white;
+    min-height: 50px; 
+}
+
+.event-item {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 6px;
+    margin-bottom: 4px;
+    background-color: #e9f7e7;
+    border-left: 3px solid #57BB4C;
+    border-radius: 2px;
+    font-size: 0.8rem;
+}
+
+.event-item button {
+    background: none;
+    border: none;
+    color: #cc0000;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 1px 2px;
+    line-height: 1;
+}
+
+.event-item button:hover {
+    color: #ff0000;
+}
+
+.fc .fc-toolbar.fc-header-toolbar {
+    margin-bottom: 8px;
+}
+
+.fc .fc-toolbar-title {
+    font-size: 1.1rem !important;
+    margin: 0;
+    padding: 0;
+}
+
+.fc .fc-toolbar button {
+    font-size: 0.75rem !important;
+    padding: 0.25em 0.5em !important;
+    height: auto !important;
+}
+
+.fc .fc-button-group {
+    gap: 2px;
+}
+
+.fc-event {
+    font-size: 0.75rem;
+    line-height: 1.2;
+}
+
+.fc .fc-timegrid-slot-label-cushion {
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+.fc-theme-standard td, .fc-theme-standard th {
+    border-color: #ddd;
+}
+
+.fc .fc-col-header-cell-cushion {
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 5px 3px;
+}
+
+.fc .fc-timegrid-slot-minor {
+    border-top-style: dotted;
+}
+
+.fc-timegrid-slot-label-frame {
+    font-size: 0.75rem;
+}
+
+.fc {
+    height: 100% !important;
+    width: 100% !important;
+}
+
+@media (max-width: 1024px) {
+    .container {
+        flex-direction: column;
+        height: 100vh;
+        overflow: auto;
+    }
+    
+    .SideBar {
+        width: 100%;
+        min-width: 0;
+        max-height: 30vh;
+        margin-bottom: 10px;
+    }
+    
+    .ScheduleView {
+        height: 70vh;
+        width: 100%;
+    }
+}
+
+.fc-event-dragging {
+    opacity: 0.7 !important;
+}
+
+.fc-event-resizing {
+    transition: none !important;
+}
+
+.ScheduleView > div {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+.fc-header-toolbar {
+    display: flex;
+    align-items: center;
+}

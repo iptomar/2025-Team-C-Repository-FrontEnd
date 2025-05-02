@@ -1,19 +1,22 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
 import { BrowserRouter as Router, Route, Switch, Link } from 'react-router-dom';
-import CRUD from './Pages/CRUDInt';
+import './App.css';
+import logo from './logoipt.png';
+//import CRUDInt from './Pages/CRUDInt'; // Página de CRUD
+import Login from './Pages/Login';
+import ScheduleView from "./Pages/ScheduleView";
+import { useEffect, useState } from 'react';
+import Home from './Pages/Home'; // Página inicial
+
 
 function App() {
   return (
     <div className="App">
       <Router>
-        <nav>
-          {/* Ajustar o caminho do Link para corresponder à rota */}
-          <Link to="/ApiCRUDInt">CRUD</Link>
-        </nav>
         <Switch>
-          {/* Ajustar o caminho da rota para corresponder ao Link */}
-          <Route path="/ApiCRUDInt" component={CRUD} />
+          <Route path="/login" component={Login} />
+          <Route path="/schedule" component={ScheduleView} />
+          <Route path="/" component={Home} />
         </Switch>
       </Router>
     </div>
