@@ -6,6 +6,9 @@ import ptLocale from "@fullcalendar/core/locales/pt"; // Importar a localizaçã
 import "../Styles/ScheduleView.css";
 import blocoHorarioService from "../services/blocoHorarioService"; // Importar o serviço de blocos horários
 import { useEffect } from "react";
+import utilizadorService from "../services/utilizadorService"; // Importar o serviço de utilizadores
+import salaService from "../services/salaService"; // Importar o serviço de salas
+import ucService from "../services/ucService"; // Importar o serviço de disciplinas
 
 const ScheduleView = () => {
   const [events, setEvents] = useState([]);
@@ -14,43 +17,107 @@ const ScheduleView = () => {
   const [subject, setSubject] = useState("");
   const [loading, setLoading] = useState(true);
 
+  // Lista - Dropdowns
+  const [teacherList, setTeacherList] = useState([]);
+  const [roomList, setRoomList] = useState([]);
+  const [subjectList, setSubjectList] = useState([]);
+
   // Função para buscar blocos horários da API e formatá-los para o FullCalendar
   // Esta função é chamada quando o componente é montado
   const fetchBlocos = async () => {
     try {
       setLoading(true);
       const response = await blocoHorarioService.getAll();
-  
+
       // Converter os dados da API para o formato de eventos do FullCalendar
-      const apiEvents = response.data.map(bloco => ({
+      const apiEvents = response.data.map((bloco) => ({
         id: bloco.idBloco,
-        title: `${bloco.disciplinaNome || 'Sem disciplina'} - ${bloco.professorNome || 'Sem docente'} - ${bloco.salaNome || 'Sem sala'}`,
+        title: `${bloco.disciplinaNome || "Sem disciplina"} - ${
+          bloco.professorNome || "Sem docente"
+        } - ${bloco.salaNome || "Sem sala"}`,
         daysOfWeek: [bloco.diaSemana], // Evento recorrente semanal
-        startTime: bloco.horaInicio,   // Ex: "08:30:00"
-        endTime: bloco.horaFim,        // Ex: "10:30:00"
+        startTime: bloco.horaInicio,
+        endTime: bloco.horaFim,
         startRecur: "1970-01-01",
-        backgroundColor: '#57BB4C',
-        borderColor: '#0d6217',
+        backgroundColor: "#57BB4C",
+        borderColor: "#0d6217",
         extendedProps: {
           teacher: bloco.professorNome,
           room: bloco.salaNome,
           subject: bloco.disciplinaNome,
           class: bloco.turmaNome,
-          typology: bloco.tipologia
-        }
+          typology: bloco.tipologia,
+        },
       }));
       setEvents(apiEvents);
     } catch (error) {
-      alert('Erro ao carregar blocos horários.');
+      alert("Erro ao carregar blocos horários.");
     } finally {
       setLoading(false);
     }
   };
-  
 
-  // Carregar blocos quando o componente montar
+  // Funções para carregar os professores, salas e disciplinas da API
+
+  // Professores
+  const fetchProfessores = async () => {
+    try {
+      const response = await utilizadorService.getDocentes();
+      const professores = response.data
+        .map((professor) => ({
+          idUtilizador: professor.idUtilizador,
+          nome: professor.nome,
+        }))
+        .sort((a, b) => a.idUtilizador - b.idUtilizador); // Ordenar por idUtilizador de forma crescente
+      console.log(professores);
+      setTeacherList(professores);
+    } catch (error) {
+      console.error("Erro ao buscar professores:", error);
+      return [];
+    }
+  };
+
+  // Salas
+  const fetchSalas = async () => {
+    try {
+      const response = await salaService.getAll();
+      const salas = response.data
+        .map((sala) => ({
+          idSala: sala.idSala,
+          nome: sala.nome,
+        }))
+        .sort((a, b) => a.id - b.id); // Ordenar por id de forma crescente
+      setRoomList(salas);
+    } catch (error) {
+      console.error("Erro ao buscar salas:", error);
+      return [];
+    }
+  };
+
+  // Disciplinas
+  const fetchDisciplinas = async () => {
+    try {
+      const response = await ucService.getAll();
+      const ucs = response.data
+        .map((ucs) => ({
+          idDisciplina: ucs.idDisciplina,
+          nomeDisciplina: ucs.nomeDisciplina,
+        }))
+        .sort((a, b) => a.id - b.id); // Ordenar por id de forma crescente
+      setSubjectList(ucs);
+      console.log(ucs);
+    } catch (error) {
+      console.error("Erro ao buscar salas:", error);
+      return [];
+    }
+  };
+
+  // Carregar blocos e as dropdowns quando o componente montar
   useEffect(() => {
     fetchBlocos();
+    fetchProfessores();
+    fetchSalas();
+    fetchDisciplinas();
   }, []);
 
   const handleDateClick = (info) => {
@@ -137,33 +204,60 @@ const ScheduleView = () => {
         <h2>Criar Bloco</h2>
         <div className="form-group">
           <label htmlFor="teacher">Professor:</label>
-          <input
-            type="text"
+          <select
             id="teacher"
             value={teacher}
             onChange={(e) => setTeacher(e.target.value)}
-            placeholder="Introduza o nome do professor"
-          />
+          >
+            <option value="">Selecione um professor</option>
+            {teacherList && teacherList.length > 0 ? (
+              teacherList.map((prof) => (
+                <option key={prof.idUtilizador} value={prof.nome}>
+                  {prof.nome}
+                </option>
+              ))
+            ) : (
+              <option disabled>A carregar professores...</option>
+            )}
+          </select>
         </div>
         <div className="form-group">
           <label htmlFor="room">Sala:</label>
-          <input
-            type="text"
+          <select
             id="room"
             value={room}
             onChange={(e) => setRoom(e.target.value)}
-            placeholder="Introduza o número da sala"
-          />
+          >
+            <option value="">Selecione uma sala</option>
+            {roomList && roomList.length > 0 ? (
+              roomList.map((room) => (
+                <option key={room.idSala} value={room.nome}>
+                  {room.nome}
+                </option>
+              ))
+            ) : (
+              <option disabled>A carregar salas...</option>
+            )}
+          </select>
         </div>
         <div className="form-group">
           <label htmlFor="subject">Disciplina:</label>
-          <input
-            type="text"
+          <select
             id="subject"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            placeholder="Introduza o nome da disciplina"
-          />
+          >
+            <option value="">Selecione uma Unidade Curricular</option>
+            {subjectList && subjectList.length > 0 ? (
+              subjectList.map((subject) => (
+                <option key={subject.idDisciplina} value={subject.nomeDisciplina}>
+                  {subject.nomeDisciplina}
+                </option>
+              ))
+            ) : (
+              <option disabled>A carregar UCs...</option>
+            )}
+          </select>
         </div>
 
         <div className="blocks-preview">
