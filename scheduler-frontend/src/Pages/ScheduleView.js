@@ -9,6 +9,7 @@ import { useEffect } from "react";
 import utilizadorService from "../services/utilizadorService"; // Importar o serviço de utilizadores
 import salaService from "../services/salaService"; // Importar o serviço de salas
 import ucService from "../services/ucService"; // Importar o serviço de disciplinas
+import connection from "../services/signalrConnection";
 
 const ScheduleView = () => {
   const [events, setEvents] = useState([]);
@@ -120,7 +121,9 @@ const ScheduleView = () => {
     fetchDisciplinas();
   }, []);
 
-  const handleDateClick = (info) => {
+  // Método de criação de um bloco horário
+  // Este método é chamado quando o utilizador clica em uma data no calendário
+  const handleDateClick = async (info) => {
     // aceitar criação de blocos apenas se todos os campos estiverem preenchidos
     if (teacher && room && subject) {
       // criar um horário de início corretamente alinhado a partir da data clicada
@@ -130,23 +133,39 @@ const ScheduleView = () => {
       const endTime = new Date(clickTime);
       endTime.setHours(endTime.getHours() + 2);
 
-      const newEvent = {
-        id: Date.now(),
-        title: `${subject} - ${teacher} - ${room}`,
-        start: clickTime,
-        end: endTime,
-        extendedProps: {
-          teacher,
-          room,
-          subject,
-        },
-        backgroundColor: "#57BB4C",
-        borderColor: "#0d6217",
+      // extrair o dia da semana
+      const dayOfWeek = clickTime.getDay();
+
+      // formatar horas para o formato esperado pela API (HH:MM:SS)
+      const formatTime = (data) => {
+        const horas = data.getHours().toString().padStart(2, "0");
+        const minutos = data.getMinutes().toString().padStart(2, "0");
+        return `${horas}:${minutos}:00`;
       };
 
-      setEvents([...events, newEvent]);
+      // Preparar dados para enviar à API
+      const novoBloco = {
+        horaInicio: formatTime(clickTime),
+        horaFim: formatTime(endTime),
+        diaSemana: dayOfWeek,
+        professorFK: teacher,
+        disciplinaFK: subject,
+        salaFK: room,
+        turmaFK: 1, // Ainda não implementado, usar 1 como placeholder
+        tipologiaFK: 1//, // Ainda não implementado, usar 1 como placeholder
+      };
+
+      // Enviar requisição POST para a API
+      const response = await blocoHorarioService.create(novoBloco);
+      if (!(response.status === 201 || response.status === 200)) {
+        alert("Erro ao criar bloco horário.");
+        return;
+      } else {
+        fetchBlocos(); // Atualizar a lista de blocos horários
+      }
+
     } else {
-      alert("Por favor, preencha todos os campos antes de criar um bloco");
+      alert("Por favor, preencha selecione todos os campos.");
     }
   };
 
@@ -212,7 +231,7 @@ const ScheduleView = () => {
             <option value="">Selecione um professor</option>
             {teacherList && teacherList.length > 0 ? (
               teacherList.map((prof) => (
-                <option key={prof.idUtilizador} value={prof.nome}>
+                <option key={prof.idUtilizador} value={prof.idUtilizador}>
                   {prof.nome}
                 </option>
               ))
@@ -231,7 +250,7 @@ const ScheduleView = () => {
             <option value="">Selecione uma sala</option>
             {roomList && roomList.length > 0 ? (
               roomList.map((room) => (
-                <option key={room.idSala} value={room.nome}>
+                <option key={room.idSala} value={room.idSala}>
                   {room.nome}
                 </option>
               ))
@@ -250,7 +269,7 @@ const ScheduleView = () => {
             <option value="">Selecione uma Unidade Curricular</option>
             {subjectList && subjectList.length > 0 ? (
               subjectList.map((subject) => (
-                <option key={subject.idDisciplina} value={subject.nomeDisciplina}>
+                <option key={subject.idDisciplina} value={subject.idDisciplina}>
                   {subject.nomeDisciplina}
                 </option>
               ))
