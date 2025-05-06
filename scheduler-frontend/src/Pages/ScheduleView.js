@@ -119,6 +119,68 @@ const ScheduleView = () => {
     fetchProfessores();
     fetchSalas();
     fetchDisciplinas();
+    // Iniciar conexão com o SignalR
+    connection
+      .start()
+      .then(() => console.log("Conectado ao SignalR"))
+      .catch((err) => console.error("Erro ao conectar ao SignalR", err));
+
+    // Eventos recebidos
+    connection.on("BlocoAdicionado", (bloco) => {
+      const newEvent = {
+        id: bloco.idBloco,
+        title: `${bloco.disciplinaNome || "Sem disciplina"} - ${
+          bloco.professorNome || "Sem docente"
+        } - ${bloco.salaNome || "Sem sala"}`,
+        daysOfWeek: [bloco.diaSemana],
+        startTime: bloco.horaInicio,
+        endTime: bloco.horaFim,
+        startRecur: "1970-01-01",
+        backgroundColor: "#57BB4C",
+        borderColor: "#0d6217",
+        extendedProps: {
+          teacher: bloco.professorNome,
+          room: bloco.salaNome,
+          subject: bloco.disciplinaNome,
+          class: bloco.turmaNome,
+          typology: bloco.tipologia,
+        },
+      };
+      setEvents((prev) => [...prev, newEvent]);
+    });
+
+    connection.on("BlocoEditado", (bloco) => {
+      setEvents((prev) =>
+        prev.map((event) =>
+          event.id === bloco.idBloco
+            ? {
+                ...event,
+                startTime: bloco.horaInicio,
+                endTime: bloco.horaFim,
+                daysOfWeek: [bloco.diaSemana],
+                extendedProps: {
+                  teacher: bloco.professorNome,
+                  room: bloco.salaNome,
+                  subject: bloco.disciplinaNome,
+                  class: bloco.turmaNome,
+                  typology: bloco.tipologia,
+                },
+              }
+            : event
+        )
+      );
+    });
+
+    connection.on("BlocoExcluido", (id) => {
+      setEvents((prev) => prev.filter((event) => event.id !== id));
+    });
+
+    return () => {
+      // Limpar listeners ao desmontar
+      connection.off("BlocoAdicionado");
+      connection.off("BlocoEditado");
+      connection.off("BlocoExcluido");
+    };
   }, []);
 
   // Método de criação de um bloco horário
@@ -152,7 +214,7 @@ const ScheduleView = () => {
         disciplinaFK: subject,
         salaFK: room,
         turmaFK: 1, // Ainda não implementado, usar 1 como placeholder
-        tipologiaFK: 1//, // Ainda não implementado, usar 1 como placeholder
+        tipologiaFK: 1, //, // Ainda não implementado, usar 1 como placeholder
       };
 
       // Enviar requisição POST para a API
@@ -163,7 +225,6 @@ const ScheduleView = () => {
       } else {
         fetchBlocos(); // Atualizar a lista de blocos horários
       }
-
     } else {
       alert("Por favor, preencha selecione todos os campos.");
     }
