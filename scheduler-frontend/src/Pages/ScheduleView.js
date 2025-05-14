@@ -10,6 +10,7 @@ import utilizadorService from "../services/utilizadorService"; // Importar o ser
 import salaService from "../services/salaService"; // Importar o serviço de salas
 import ucService from "../services/ucService"; // Importar o serviço de disciplinas
 import connection from "../services/signalrConnection";
+import { formatRange } from "@fullcalendar/core/index.js";
 
 const ScheduleView = () => {
   const [events, setEvents] = useState([]);
@@ -30,37 +31,36 @@ const ScheduleView = () => {
       setLoading(true);
       const response = await blocoHorarioService.getAll();
 
-    // Converter os dados da API para o formato de eventos do FullCalendar
-    const apiEvents = response.data.map((bloco) => {
-      // Montar datas completas para start e end
-      // bloco.dia deve estar no formato 'YYYY-MM-DD'
-      const start = `${bloco.dia}T${bloco.horaInicio}`;
-      const end = `${bloco.dia}T${bloco.horaFim}`;
+      // Converter os dados da API para o formato de eventos do FullCalendar
+      const apiEvents = response.data.map((bloco) => {
+        // Montar datas completas para start e end
+        // bloco.dia deve estar no formato 'YYYY-MM-DD'
+        const start = `${bloco.dia}T${bloco.horaInicio}`;
+        const end = `${bloco.dia}T${bloco.horaFim}`;
 
-      return {
-        id: bloco.idBloco,
-        title: `${bloco.unidadeCurricularNome || "Sem disciplina"} - ${
-          bloco.professorNome || "Sem docente"
-        } - ${bloco.salaNome || "Sem sala"}`,
-        start, // data completa
-        end,   // data completa
-        backgroundColor: "#57BB4C",
-        borderColor: "#0d6217",
-        extendedProps: {
-          teacher: bloco.professorNome,
-          room: bloco.salaNome,
-          subject: bloco.unidadeCurricularNome,
-          class: bloco.turmaNome,
-          typology: bloco.tipologia,
-        },
-      };
-    });
-    setEvents(apiEvents);
-  } catch (error) {
-    alert("Erro ao carregar blocos horários.");
-  } finally {
-    setLoading(false);
-  }
+        return {
+          id: bloco.idBloco,
+          title: `${bloco.unidadeCurricularNome || "Sem disciplina"} - ${
+            bloco.professorNome || "Sem docente"
+          } - ${bloco.salaNome || "Sem sala"}`,
+          start, // data completa
+          end, // data completa
+          backgroundColor: "#57BB4C",
+          borderColor: "#0d6217",
+          extendedProps: {
+            teacher: bloco.professorNome,
+            room: bloco.salaNome,
+            subject: bloco.unidadeCurricularNome,
+            class: bloco.turmaNome,
+          },
+        };
+      });
+      setEvents(apiEvents);
+    } catch (error) {
+      alert("Erro ao carregar blocos horários.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Funções para carregar os professores, salas e disciplinas da API
@@ -101,22 +101,22 @@ const ScheduleView = () => {
   };
 
   // Unidades Curriculares
-const fetchUCS = async () => {
-  try {
-    const response = await ucService.getAll();
-    const ucs = response.data
-      .map((uc) => ({
-        idUC: uc.idUC ?? uc.IdUC, // aceita ambos por compatibilidade
-        nomeUC: uc.nomeUC ?? uc.NomeUC,
-      }))
-      .sort((a, b) => a.idUC - b.idUC); // Ordenar por idUC de forma crescente
-    setSubjectList(ucs);
-    console.log(ucs);
-  } catch (error) {
-    console.error("Erro ao buscar Unidades Curriculares:", error);
-    return [];
-  }
-};
+  const fetchUCS = async () => {
+    try {
+      const response = await ucService.getAll();
+      const ucs = response.data
+        .map((uc) => ({
+          idUC: uc.idUC ?? uc.IdUC, // aceita ambos por compatibilidade
+          nomeUC: uc.nomeUC ?? uc.NomeUC,
+        }))
+        .sort((a, b) => a.idUC - b.idUC); // Ordenar por idUC de forma crescente
+      setSubjectList(ucs);
+      console.log(ucs);
+    } catch (error) {
+      console.error("Erro ao buscar Unidades Curriculares:", error);
+      return [];
+    }
+  };
 
   // Carregar blocos e as dropdowns quando o componente montar
   useEffect(() => {
@@ -134,21 +134,18 @@ const fetchUCS = async () => {
     connection.on("BlocoAdicionado", (bloco) => {
       const newEvent = {
         id: bloco.idBloco,
-        title: `${bloco.disciplinaNome || "Sem disciplina"} - ${
+        title: `${bloco.unidadeCurricularNome || "Sem disciplina"} - ${
           bloco.professorNome || "Sem docente"
         } - ${bloco.salaNome || "Sem sala"}`,
-        daysOfWeek: [bloco.diaSemana],
-        startTime: bloco.horaInicio,
-        endTime: bloco.horaFim,
-        startRecur: "1970-01-01",
+        start: `${bloco.dia}T${bloco.horaInicio}`,
+        end: `${bloco.dia}T${bloco.horaFim}`,
         backgroundColor: "#57BB4C",
         borderColor: "#0d6217",
         extendedProps: {
           teacher: bloco.professorNome,
           room: bloco.salaNome,
-          subject: bloco.disciplinaNome,
+          subject: bloco.unidadeCurricularNome,
           class: bloco.turmaNome,
-          typology: bloco.tipologia,
         },
       };
       setEvents((prev) => [...prev, newEvent]);
@@ -168,7 +165,6 @@ const fetchUCS = async () => {
                   room: bloco.salaNome,
                   subject: bloco.disciplinaNome,
                   class: bloco.turmaNome,
-                  typology: bloco.tipologia,
                 },
               }
             : event
@@ -200,8 +196,13 @@ const fetchUCS = async () => {
       const endTime = new Date(clickTime);
       endTime.setHours(endTime.getHours() + 2);
 
-      // extrair o dia da semana
-      const dayOfWeek = clickTime.getDay();
+      // Formatar data para YYYY-MM-DD
+      const formatDate = (date) => {
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const day = date.getDate().toString().padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      };
 
       // formatar horas para o formato esperado pela API (HH:MM:SS)
       const formatTime = (data) => {
@@ -214,12 +215,11 @@ const fetchUCS = async () => {
       const novoBloco = {
         horaInicio: formatTime(clickTime),
         horaFim: formatTime(endTime),
-        diaSemana: dayOfWeek,
+        dia: formatDate(clickTime),
         professorFK: teacher,
-        disciplinaFK: subject,
+        unidadeCurricularFK: subject,
         salaFK: room,
         turmaFK: 1, // Ainda não implementado, usar 1 como placeholder
-        tipologiaFK: 1, //, // Ainda não implementado, usar 1 como placeholder
       };
 
       // Enviar requisição POST para a API
