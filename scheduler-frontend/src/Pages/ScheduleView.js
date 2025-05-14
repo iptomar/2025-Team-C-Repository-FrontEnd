@@ -238,16 +238,15 @@ const ScheduleView = () => {
       if (!(response.status === 201 || response.status === 200)) {
         alert("Erro ao criar bloco horário.");
         return;
-      } else {
-        fetchBlocos(); // Atualizar a lista de blocos horários
       }
+       
     } else {
       alert("Por favor, preencha selecione todos os campos.");
     }
   };
 
-  // Método para lidar com o arrastar de um bloco
-  const handleEventDrop = async (info) => {
+  // Método para lidar com o arrastar/redimensionar de um bloco
+  const handleEventEdit = async (info) => {
     const eventId = parseInt(info.event.id);
     const updatedEvent = events.find((event) => event.id === eventId);
 
@@ -288,9 +287,7 @@ const ScheduleView = () => {
         eventId,
         blocoAtualizado
       );
-      if (response.status === 200 || response.status === 204) {
-
-      } else {
+      if (!(response.status === 200 || response.status === 204)) {
         alert("Erro ao atualizar bloco na API.");
         info.revert();
       }
@@ -300,26 +297,18 @@ const ScheduleView = () => {
     }
   };
 
-  // Método para lidar com redimensionar o bloco
-  const handleEventResize = (info) => {
-    const updatedEvents = events.map((event) => {
-      if (event.id === parseInt(info.event.id)) {
-        return {
-          ...event,
-          start: info.event.start,
-          end: info.event.end,
-        };
-      }
-      return event;
-    });
-    setEvents(updatedEvents);
-  };
-
   // Método para lidar com a exclusão de um bloco
-  const handleDeleteEvent = (eventId) => {
-    setEvents((prevEvents) =>
-      prevEvents.filter((event) => event.id !== eventId)
-    );
+  const handleDeleteEvent = async (eventId) => {
+    try {
+      // Apagar o bloco
+      const response = await blocoHorarioService.delete(eventId);
+      // Tratar o estado da resposta
+      if (!(response.status === 200 || response.status === 204)) {
+        alert("Erro ao excluir bloco.");
+      }
+    } catch (error) {
+      alert("Erro ao excluir bloco.");
+    }
   };
 
   // Método para formatar o rótulo do slot
@@ -439,8 +428,8 @@ const ScheduleView = () => {
           allDaySlot={false}
           events={events}
           editable={true}
-          eventDrop={handleEventDrop}
-          eventResize={handleEventResize}
+          eventDrop={handleEventEdit}
+          eventResize={handleEventEdit}
           dateClick={handleDateClick}
           slotDuration="00:30:00"
           slotLabelInterval="00:30:00"
