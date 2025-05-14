@@ -30,32 +30,37 @@ const ScheduleView = () => {
       setLoading(true);
       const response = await blocoHorarioService.getAll();
 
-      // Converter os dados da API para o formato de eventos do FullCalendar
-      const apiEvents = response.data.map((bloco) => ({
+    // Converter os dados da API para o formato de eventos do FullCalendar
+    const apiEvents = response.data.map((bloco) => {
+      // Montar datas completas para start e end
+      // bloco.dia deve estar no formato 'YYYY-MM-DD'
+      const start = `${bloco.dia}T${bloco.horaInicio}`;
+      const end = `${bloco.dia}T${bloco.horaFim}`;
+
+      return {
         id: bloco.idBloco,
-        title: `${bloco.disciplinaNome || "Sem disciplina"} - ${
+        title: `${bloco.unidadeCurricularNome || "Sem disciplina"} - ${
           bloco.professorNome || "Sem docente"
         } - ${bloco.salaNome || "Sem sala"}`,
-        daysOfWeek: [bloco.diaSemana], // Evento recorrente semanal
-        startTime: bloco.horaInicio,
-        endTime: bloco.horaFim,
-        startRecur: "1970-01-01",
+        start, // data completa
+        end,   // data completa
         backgroundColor: "#57BB4C",
         borderColor: "#0d6217",
         extendedProps: {
           teacher: bloco.professorNome,
           room: bloco.salaNome,
-          subject: bloco.disciplinaNome,
+          subject: bloco.unidadeCurricularNome,
           class: bloco.turmaNome,
           typology: bloco.tipologia,
         },
-      }));
-      setEvents(apiEvents);
-    } catch (error) {
-      alert("Erro ao carregar blocos horários.");
-    } finally {
-      setLoading(false);
-    }
+      };
+    });
+    setEvents(apiEvents);
+  } catch (error) {
+    alert("Erro ao carregar blocos horários.");
+  } finally {
+    setLoading(false);
+  }
   };
 
   // Funções para carregar os professores, salas e disciplinas da API
@@ -95,30 +100,30 @@ const ScheduleView = () => {
     }
   };
 
-  // Disciplinas
-  const fetchDisciplinas = async () => {
-    try {
-      const response = await ucService.getAll();
-      const ucs = response.data
-        .map((ucs) => ({
-          idDisciplina: ucs.idDisciplina,
-          nomeDisciplina: ucs.nomeDisciplina,
-        }))
-        .sort((a, b) => a.id - b.id); // Ordenar por id de forma crescente
-      setSubjectList(ucs);
-      console.log(ucs);
-    } catch (error) {
-      console.error("Erro ao buscar salas:", error);
-      return [];
-    }
-  };
+  // Unidades Curriculares
+const fetchUCS = async () => {
+  try {
+    const response = await ucService.getAll();
+    const ucs = response.data
+      .map((uc) => ({
+        idUC: uc.idUC ?? uc.IdUC, // aceita ambos por compatibilidade
+        nomeUC: uc.nomeUC ?? uc.NomeUC,
+      }))
+      .sort((a, b) => a.idUC - b.idUC); // Ordenar por idUC de forma crescente
+    setSubjectList(ucs);
+    console.log(ucs);
+  } catch (error) {
+    console.error("Erro ao buscar Unidades Curriculares:", error);
+    return [];
+  }
+};
 
   // Carregar blocos e as dropdowns quando o componente montar
   useEffect(() => {
     fetchBlocos();
     fetchProfessores();
     fetchSalas();
-    fetchDisciplinas();
+    fetchUCS();
     // Iniciar conexão com o SignalR
     connection
       .start()
@@ -330,8 +335,8 @@ const ScheduleView = () => {
             <option value="">Selecione uma Unidade Curricular</option>
             {subjectList && subjectList.length > 0 ? (
               subjectList.map((subject) => (
-                <option key={subject.idDisciplina} value={subject.idDisciplina}>
-                  {subject.nomeDisciplina}
+                <option key={subject.idUC} value={subject.idUC}>
+                  {subject.nomeUC}
                 </option>
               ))
             ) : (
