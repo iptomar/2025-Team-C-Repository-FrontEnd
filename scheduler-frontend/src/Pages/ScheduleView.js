@@ -157,13 +157,12 @@ const ScheduleView = () => {
           event.id === bloco.idBloco
             ? {
                 ...event,
-                startTime: bloco.horaInicio,
-                endTime: bloco.horaFim,
-                daysOfWeek: [bloco.diaSemana],
+                start: `${bloco.dia}T${bloco.horaInicio}`,
+                end: `${bloco.dia}T${bloco.horaFim}`,
                 extendedProps: {
                   teacher: bloco.professorNome,
                   room: bloco.salaNome,
-                  subject: bloco.disciplinaNome,
+                  subject: bloco.unidadeCurricularNome,
                   class: bloco.turmaNome,
                 },
               }
