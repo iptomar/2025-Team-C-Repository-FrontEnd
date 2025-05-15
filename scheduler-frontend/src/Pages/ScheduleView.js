@@ -49,9 +49,13 @@ const ScheduleView = () => {
           borderColor: "#0d6217",
           extendedProps: {
             teacher: bloco.professorNome,
+            teacherId: bloco.professorFK,
             room: bloco.salaNome,
+            roomId: bloco.salaFK,
             subject: bloco.unidadeCurricularNome,
+            subjectId: bloco.unidadeCurricularFK,
             class: bloco.turmaNome,
+            classId: bloco.turmaFK,
           },
         };
       });
@@ -143,9 +147,13 @@ const ScheduleView = () => {
         borderColor: "#0d6217",
         extendedProps: {
           teacher: bloco.professorNome,
+          teacherId: bloco.professorFK,
           room: bloco.salaNome,
+          roomId: bloco.salaFK,
           subject: bloco.unidadeCurricularNome,
+          subjectId: bloco.unidadeCurricularFK,
           class: bloco.turmaNome,
+          classId: bloco.turmaFK,
         },
       };
       setEvents((prev) => [...prev, newEvent]);
@@ -161,9 +169,13 @@ const ScheduleView = () => {
                 end: `${bloco.dia}T${bloco.horaFim}`,
                 extendedProps: {
                   teacher: bloco.professorNome,
+                  teacherId: bloco.professorFK,
                   room: bloco.salaNome,
+                  roomId: bloco.salaFK,
                   subject: bloco.unidadeCurricularNome,
+                  subjectId: bloco.unidadeCurricularFK,
                   class: bloco.turmaNome,
+                  classId: bloco.turmaFK,
                 },
               }
             : event
@@ -226,48 +238,80 @@ const ScheduleView = () => {
       if (!(response.status === 201 || response.status === 200)) {
         alert("Erro ao criar bloco horário.");
         return;
-      } else {
-        fetchBlocos(); // Atualizar a lista de blocos horários
       }
+       
     } else {
       alert("Por favor, preencha selecione todos os campos.");
     }
   };
 
-  const handleEventDrop = (info) => {
-    const updatedEvents = events.map((event) => {
-      if (event.id === parseInt(info.event.id)) {
-        return {
-          ...event,
-          start: info.event.start,
-          end: info.event.end,
-        };
+  // Método para lidar com o arrastar/redimensionar de um bloco
+  const handleEventEdit = async (info) => {
+    const eventId = parseInt(info.event.id);
+    const updatedEvent = events.find((event) => event.id === eventId);
+
+    // Preparar dados para enviar à API
+    const startDate = new Date(info.event.start);
+    const endDate = new Date(info.event.end);
+
+    // Formatar data para YYYY-MM-DD
+    const formatDate = (date) => {
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, "0");
+      const day = date.getDate().toString().padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
+
+    // formatar horas para o formato esperado pela API (HH:MM:SS)
+    const formatTime = (date) => {
+      const hours = date.getHours().toString().padStart(2, "0");
+      const minutes = date.getMinutes().toString().padStart(2, "0");
+      return `${hours}:${minutes}:00`;
+    };
+
+    // Preparar dados para enviar à API
+    const blocoAtualizado = {
+      IdBloco: eventId,
+      horaInicio: formatTime(startDate),
+      horaFim: formatTime(endDate),
+      dia: formatDate(startDate),
+      professorFK: Number(updatedEvent.extendedProps.teacherId),
+      unidadeCurricularFK: Number(updatedEvent.extendedProps.subjectId),
+      salaFK: Number(updatedEvent.extendedProps.roomId),
+      turmaFK: Number(updatedEvent.extendedProps.classId) || 1, // fallback para 1 se não existir
+    };
+
+    // Enviar requisição PUT para a API
+    try {
+      const response = await blocoHorarioService.update(
+        eventId,
+        blocoAtualizado
+      );
+      if (!(response.status === 200 || response.status === 204)) {
+        alert("Erro ao atualizar bloco na API.");
+        info.revert();
       }
-      return event;
-    });
-    setEvents(updatedEvents);
+    } catch (error) {
+      alert("Erro ao atualizar bloco na API.");
+      info.revert();
+    }
   };
 
-  const handleEventResize = (info) => {
-    const updatedEvents = events.map((event) => {
-      if (event.id === parseInt(info.event.id)) {
-        return {
-          ...event,
-          start: info.event.start,
-          end: info.event.end,
-        };
+  // Método para lidar com a exclusão de um bloco
+  const handleDeleteEvent = async (eventId) => {
+    try {
+      // Apagar o bloco
+      const response = await blocoHorarioService.delete(eventId);
+      // Tratar o estado da resposta
+      if (!(response.status === 200 || response.status === 204)) {
+        alert("Erro ao excluir bloco.");
       }
-      return event;
-    });
-    setEvents(updatedEvents);
+    } catch (error) {
+      alert("Erro ao excluir bloco.");
+    }
   };
 
-  const handleDeleteEvent = (eventId) => {
-    setEvents((prevEvents) =>
-      prevEvents.filter((event) => event.id !== eventId)
-    );
-  };
-
+  // Método para formatar o rótulo do slot
   const slotLabelFormatter = (slotInfo) => {
     const start = new Date(slotInfo.date);
     const end = new Date(start);
@@ -384,8 +428,8 @@ const ScheduleView = () => {
           allDaySlot={false}
           events={events}
           editable={true}
-          eventDrop={handleEventDrop}
-          eventResize={handleEventResize}
+          eventDrop={handleEventEdit}
+          eventResize={handleEventEdit}
           dateClick={handleDateClick}
           slotDuration="00:30:00"
           slotLabelInterval="00:30:00"
