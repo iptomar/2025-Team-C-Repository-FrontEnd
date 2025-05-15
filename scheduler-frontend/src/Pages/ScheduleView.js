@@ -11,6 +11,7 @@ import salaService from "../services/salaService"; // Importar o serviço de sal
 import ucService from "../services/ucService"; // Importar o serviço de disciplinas
 import connection from "../services/signalrConnection";
 import { formatRange } from "@fullcalendar/core/index.js";
+import { useHistory } from "react-router-dom";
 
 const ScheduleView = () => {
   const [events, setEvents] = useState([]);
@@ -23,6 +24,8 @@ const ScheduleView = () => {
   const [teacherList, setTeacherList] = useState([]);
   const [roomList, setRoomList] = useState([]);
   const [subjectList, setSubjectList] = useState([]);
+
+  const history = useHistory();
 
   // Função para buscar blocos horários da API e formatá-los para o FullCalendar
   // Esta função é chamada quando o componente é montado
@@ -329,6 +332,12 @@ const ScheduleView = () => {
   return (
     <div className="container">
       <div className="SideBar">
+        <button
+          style={{ width: '100%', marginBottom: 16, background: '#57BB4C', color: 'white', fontWeight: 'bold', fontSize: '1rem', border: 'none', borderRadius: 4, padding: '10px 0', cursor: 'pointer' }}
+          onClick={() => history.push('/upload-data')}
+        >
+          Upload Data
+        </button>
         <h2>Criar Bloco</h2>
         <div className="form-group">
           <label htmlFor="teacher">Professor:</label>
