@@ -32,6 +32,25 @@ function UploadData() {
           accept=".xlsx, .xls"
           onChange={handleFileUpload}
         />
+        <button
+          className="download-preset-btn"
+          onClick={() => {
+            const link = document.createElement('a');
+            link.href = process.env.PUBLIC_URL + '/preset.xlsx';
+            link.download = 'preset.xlsx';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }}
+        >
+          Download Preset File
+        </button>
+        <button
+          className="return-schedule-btn"
+          onClick={() => window.location.href = 'http://localhost:3000/schedule'}
+        >
+          Voltar ao Horário
+        </button>
       </div>
       {tableData && (
         <div className="upload-table-container">
