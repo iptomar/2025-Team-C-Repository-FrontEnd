@@ -13,11 +13,18 @@ import connection from "../services/signalrConnection";
 import { formatRange } from "@fullcalendar/core/index.js";
 
 const ScheduleView = () => {
+  // Sem filtros aplicados
+  const [allEvents, setAllEvents] = useState([]);
+
   const [events, setEvents] = useState([]);
   const [teacher, setTeacher] = useState("");
   const [room, setRoom] = useState("");
   const [subject, setSubject] = useState("");
   const [loading, setLoading] = useState(true);
+
+  // Seleção - Filtro
+  const [teacherFilter, setTeacherFilter] = useState("");
+  const [roomFilter, setRoomFilter] = useState("");
 
   // Lista - Dropdowns
   const [teacherList, setTeacherList] = useState([]);
@@ -60,6 +67,7 @@ const ScheduleView = () => {
         };
       });
       setEvents(apiEvents);
+      setAllEvents(apiEvents);
     } catch (error) {
       alert("Erro ao carregar blocos horários.");
     } finally {
@@ -239,7 +247,6 @@ const ScheduleView = () => {
         alert("Erro ao criar bloco horário.");
         return;
       }
-       
     } else {
       alert("Por favor, preencha selecione todos os campos.");
     }
@@ -326,6 +333,27 @@ const ScheduleView = () => {
     return `${formatTime(start)} - ${formatTime(end)}`;
   };
 
+  const applyFilters = () => {
+    let filtered = allEvents;
+
+    // Filtrar por docente
+    if (teacherFilter !== "") {
+      filtered = filtered.filter(
+        (event) =>
+          String(event.extendedProps.teacherId) === String(teacherFilter)
+      );
+    }
+
+    // Filtrar por sala
+    if (roomFilter !== "") {
+      filtered = filtered.filter(
+        (event) => String(event.extendedProps.roomId) === String(roomFilter)
+      );
+    }
+
+    setEvents(filtered);
+  };
+
   return (
     <div className="container">
       <div className="SideBar">
@@ -386,6 +414,51 @@ const ScheduleView = () => {
               <option disabled>A carregar UCs...</option>
             )}
           </select>
+
+          <h2>Filtros</h2>
+          <div className="form-group">
+            <label htmlFor="teacherFilter">Docente:</label>
+            <select
+              id="teacherFilter"
+              value={teacherFilter}
+              onChange={(e) => setTeacherFilter(e.target.value)}
+            >
+              <option value="">Selecione um docente</option>
+              {teacherList && teacherList.length > 0 ? (
+                teacherList.map((prof) => (
+                  <option key={prof.idUtilizador} value={prof.idUtilizador}>
+                    {prof.nome}
+                  </option>
+                ))
+              ) : (
+                <option disabled>A carregar docentes...</option>
+              )}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="room">Sala:</label>
+            <select
+              id="roomFilter"
+              value={roomFilter}
+              onChange={(e) => setRoomFilter(e.target.value)}
+            >
+              <option value="">Selecione uma sala</option>
+              {roomList && roomList.length > 0 ? (
+                roomList.map((room) => (
+                  <option key={room.idSala} value={room.idSala}>
+                    {room.nome}
+                  </option>
+                ))
+              ) : (
+                <option disabled>A carregar salas...</option>
+              )}
+            </select>
+
+            <button className="applyFilterBt" onClick={applyFilters}>
+              Aplicar Filtros
+            </button>
+          </div>
         </div>
 
         <div className="blocks-preview">
