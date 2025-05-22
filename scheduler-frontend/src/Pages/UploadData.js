@@ -120,6 +120,19 @@ function UploadData() {
           >
             Carregar todas as folhas na base de dados
           </button>
+          <button
+            className="export-excel-btn"
+            onClick={() => {
+              const wb = XLSX.utils.book_new();
+              Object.entries(sheetsData).forEach(([sheetName, data]) => {
+                const ws = XLSX.utils.aoa_to_sheet(data);
+                XLSX.utils.book_append_sheet(wb, ws, sheetName);
+              });
+              XLSX.writeFile(wb, 'dados_editados.xlsx');
+            }}
+          >
+            Guardar dados num Excel
+          </button>
         </div>
       )}
     </div>

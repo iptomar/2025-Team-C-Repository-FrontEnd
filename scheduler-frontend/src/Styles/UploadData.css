@@ -149,3 +149,19 @@
 .send-sheet-btn:hover, .send-all-btn:hover {
   background: #1251a3;
 }
+
+.export-excel-btn {
+  font-size: 0.95rem;
+  padding: 8px 18px;
+  border-radius: 4px;
+  background: #388e3c;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-weight: 500;
+}
+
+.export-excel-btn:hover {
+  background: #256029;
+}
