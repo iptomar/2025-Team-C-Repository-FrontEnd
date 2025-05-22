@@ -9,6 +9,7 @@ import { useEffect } from "react";
 import utilizadorService from "../services/utilizadorService"; // Importar o serviço de utilizadores
 import salaService from "../services/salaService"; // Importar o serviço de salas
 import ucService from "../services/ucService"; // Importar o serviço de disciplinas
+import turmaService from "../services/turmaService"; // Importar o serviço de turmas
 import connection from "../services/signalrConnection";
 import { formatRange } from "@fullcalendar/core/index.js";
 import { jwtDecode } from "jwt-decode"; // Importar a biblioteca de descodificar as JWTs
@@ -25,11 +26,13 @@ const ScheduleView = () => {
   const [teacher, setTeacher] = useState("");
   const [room, setRoom] = useState("");
   const [subject, setSubject] = useState("");
+  const [classList, setClassList] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Seleção - Filtro
   const [teacherFilter, setTeacherFilter] = useState("");
   const [roomFilter, setRoomFilter] = useState("");
+  const [classFilter, setClassFilter] = useState("");
 
   // Lista - Dropdowns
   const [teacherList, setTeacherList] = useState([]);
@@ -129,6 +132,24 @@ const ScheduleView = () => {
     }
   };
 
+  // Turmas
+    const fetchTurmas = async () => {
+    try {
+      const response = await turmaService.getAll();
+      const turmas = response.data
+        .map((turma) => ({
+          idTurma: turma.idTurma,
+          nome: turma.nome,
+        }))
+        .sort((a, b) => a.id - b.id); // Ordenar por id de forma crescente
+      setClassList(turmas);
+    } catch (error) {
+      console.error("Erro ao buscar turmas:", error);
+      return [];
+    }
+  };
+
+
   // Unidades Curriculares
   const fetchUCS = async () => {
     try {
@@ -154,6 +175,7 @@ const ScheduleView = () => {
     fetchProfessores();
     fetchSalas();
     fetchUCS();
+    fetchTurmas();
 
     // Iniciar conexão com o SignalR
     connection
@@ -233,7 +255,7 @@ const ScheduleView = () => {
   // 3. Aplica filtros de forma automática
   useEffect(() => {
     applyFilters();
-  }, [teacherFilter, roomFilter, allEvents]);
+  }, [teacherFilter, roomFilter, classFilter, allEvents]);
 
   // Método de criação de um bloco horário
   // Este método é chamado quando o utilizador clica em uma data no calendário
@@ -384,10 +406,17 @@ const ScheduleView = () => {
       );
     }
 
+    // Filtrar por turma
+    if (classFilter !== "") {
+      filtered = filtered.filter(
+        (event) => String(event.extendedProps.classId) === String(classFilter)
+      );
+    }
+
     setEvents(filtered);
   };
 
-    return (
+  return (
     <div className="container">
       {/* Sidebar só para NÃO docentes */}
       {userRole !== "Docente" && (
@@ -493,10 +522,31 @@ const ScheduleView = () => {
             </select>
           </div>
 
+          <div className="form-group">
+            <label htmlFor="classFilter">Turma:</label>
+            <select
+              id="classFilter"
+              value={classFilter}
+              onChange={(e) => setClassFilter(e.target.value)}
+            >
+              <option value="">Selecione uma Turma</option>
+              {classList && classList.length > 0 ? (
+                classList.map((turma) => (
+                  <option key={turma.idTurma} value={turma.idTurma}>
+                    {turma.nome}
+                  </option>
+                ))
+              ) : (
+                <option disabled>A carregar turmas...</option>
+              )}
+            </select>
+          </div>
+
           <div className="blocks-preview">
             <h3>Blocos Atuais</h3>
             <p className="instructions">
-              Preencha os campos acima e clique no calendário para criar um bloco
+              Preencha os campos acima e clique no calendário para criar um
+              bloco
             </p>
             <div className="events-list">
               {events.length > 0 ? (
@@ -518,48 +568,48 @@ const ScheduleView = () => {
           </div>
         </div>
       )}
-        <div className="ScheduleView">
-          <FullCalendar
-            plugins={[timeGridPlugin, interactionPlugin]}
-            initialView="timeGridWeek"
-            locale={ptLocale}
-            height="auto"
-            headerToolbar={{
-              left: "prev,next today",
-              center: "title",
-              right: "timeGridWeek,timeGridDay",
-            }}
-            slotMinTime="08:30:00"
-            slotMaxTime="24:00:00"
-            allDaySlot={false}
-            events={events}
-            editable={true}
-            eventDrop={handleEventEdit}
-            eventResize={handleEventEdit}
-            dateClick={handleDateClick}
-            slotDuration="00:30:00"
-            slotLabelInterval="00:30:00"
-            slotLabelContent={slotLabelFormatter}
-            eventContent={(eventInfo) => {
-              return (
-                <div>
-                  <b>
-                    {eventInfo.event.extendedProps?.subject ||
-                      eventInfo.event.title}
-                  </b>
-                  {eventInfo.event.extendedProps?.teacher && (
-                    <div>
-                      <i>{eventInfo.event.extendedProps.teacher}</i>
-                    </div>
-                  )}
-                  {eventInfo.event.extendedProps?.room && (
-                    <div>Sala: {eventInfo.event.extendedProps.room}</div>
-                  )}
-                </div>
-              );
-            }}
-          />
-        </div>
+      <div className="ScheduleView">
+        <FullCalendar
+          plugins={[timeGridPlugin, interactionPlugin]}
+          initialView="timeGridWeek"
+          locale={ptLocale}
+          height="auto"
+          headerToolbar={{
+            left: "prev,next today",
+            center: "title",
+            right: "timeGridWeek,timeGridDay",
+          }}
+          slotMinTime="08:30:00"
+          slotMaxTime="24:00:00"
+          allDaySlot={false}
+          events={events}
+          editable={true}
+          eventDrop={handleEventEdit}
+          eventResize={handleEventEdit}
+          dateClick={handleDateClick}
+          slotDuration="00:30:00"
+          slotLabelInterval="00:30:00"
+          slotLabelContent={slotLabelFormatter}
+          eventContent={(eventInfo) => {
+            return (
+              <div>
+                <b>
+                  {eventInfo.event.extendedProps?.subject ||
+                    eventInfo.event.title}
+                </b>
+                {eventInfo.event.extendedProps?.teacher && (
+                  <div>
+                    <i>{eventInfo.event.extendedProps.teacher}</i>
+                  </div>
+                )}
+                {eventInfo.event.extendedProps?.room && (
+                  <div>Sala: {eventInfo.event.extendedProps.room}</div>
+                )}
+              </div>
+            );
+          }}
+        />
+      </div>
     </div>
   );
 };
