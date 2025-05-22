@@ -12,6 +12,7 @@ import ucService from "../services/ucService"; // Importar o serviço de discipl
 import turmaService from "../services/turmaService"; // Importar o serviço de turmas
 import connection from "../services/signalrConnection";
 import { formatRange } from "@fullcalendar/core/index.js";
+import { useHistory } from "react-router-dom";
 import { jwtDecode } from "jwt-decode"; // Importar a biblioteca de descodificar as JWTs
 
 const ScheduleView = () => {
@@ -39,6 +40,7 @@ const ScheduleView = () => {
   const [roomList, setRoomList] = useState([]);
   const [subjectList, setSubjectList] = useState([]);
 
+  const history = useHistory();
   // 1. Carregar role e userId do JWT
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -421,6 +423,12 @@ const ScheduleView = () => {
       {/* Sidebar só para NÃO docentes */}
       {userRole !== "Docente" && (
         <div className="SideBar">
+          <button
+          style={{ width: '100%', marginBottom: 16, background: '#57BB4C', color: 'white', fontWeight: 'bold', fontSize: '1rem', border: 'none', borderRadius: 4, padding: '10px 0', cursor: 'pointer' }}
+          onClick={() => history.push('/upload-data')}
+          >
+          Upload Data
+          </button>
           <h2>Criar Bloco</h2>
           <div className="form-group">
             <label htmlFor="teacher">Professor:</label>
