@@ -3,8 +3,9 @@ import * as XLSX from 'xlsx';
 import '../Styles/UploadData.css';
 
 function UploadData() {
-  const [tableData, setTableData] = useState(null);
-  const [sheetName, setSheetName] = useState('');
+  const [sheetsData, setSheetsData] = useState({});
+  const [sheetNames, setSheetNames] = useState([]);
+  const [selectedSheet, setSelectedSheet] = useState('');
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -13,11 +14,14 @@ function UploadData() {
     reader.onload = (evt) => {
       const data = new Uint8Array(evt.target.result);
       const workbook = XLSX.read(data, { type: 'array' });
-      const firstSheet = workbook.SheetNames[0];
-      setSheetName(firstSheet);
-      const worksheet = workbook.Sheets[firstSheet];
-      const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-      setTableData(json);
+      const allSheets = {};
+      workbook.SheetNames.forEach((name) => {
+        const worksheet = workbook.Sheets[name];
+        allSheets[name] = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+      });
+      setSheetsData(allSheets);
+      setSheetNames(workbook.SheetNames);
+      setSelectedSheet(workbook.SheetNames[0] || '');
     };
     reader.readAsArrayBuffer(file);
   };
@@ -52,12 +56,25 @@ function UploadData() {
           Voltar ao Horário
         </button>
       </div>
-      {tableData && (
+      {sheetNames.length > 0 && (
+        <div className="sheet-tabs">
+          {sheetNames.map((name) => (
+            <button
+              key={name}
+              className={`sheet-tab${selectedSheet === name ? ' active' : ''}`}
+              onClick={() => setSelectedSheet(name)}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+      )}
+      {selectedSheet && sheetsData[selectedSheet] && (
         <div className="upload-table-container">
-          <h3>Primeira folha: {sheetName}</h3>
+          <h3>Folha: {selectedSheet}</h3>
           <table className="upload-table">
             <tbody>
-              {tableData.map((row, i) => (
+              {sheetsData[selectedSheet].map((row, i) => (
                 <tr key={i}>
                   {row.map((cell, j) => (
                     <td key={j}>{cell}</td>

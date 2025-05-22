@@ -12,7 +12,7 @@
   display: flex;
   align-items: center;
   padding: 24px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   margin-bottom: 0;
   gap: 20px;
   height: 72px;
@@ -45,7 +45,7 @@
   max-height: 600px;
   overflow-y: auto;
   background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
   border-radius: 6px;
 }
 
@@ -57,7 +57,8 @@
   margin: 32px auto 0 auto;
 }
 
-.upload-table th, .upload-table td {
+.upload-table th,
+.upload-table td {
   border: 1px solid #ccc;
   padding: 4px 8px;
   text-align: left;
@@ -81,6 +82,7 @@
   transition: background 0.2s;
   margin-left: 12px;
 }
+
 .download-preset-btn:hover {
   background: #c9d6e3;
 }
@@ -99,6 +101,35 @@
   transition: background 0.2s;
   margin-left: 12px;
 }
+
 .return-schedule-btn:hover {
   background: #b2f0d6;
+}
+
+.sheet-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0 8px 0;
+}
+
+.sheet-tab {
+  padding: 4px 12px;
+  font-size: 0.95rem;
+  border: 1px solid #ccc;
+  background: #f7f7f7;
+  border-radius: 4px 4px 0 0;
+  cursor: pointer;
+  transition: background 0.2s, border 0.2s;
+  margin-bottom: -1px;
+  color: #111;
+}
+
+.sheet-tab.active {
+  background: #e0e0e0;
+  border-bottom: 2px solid #1976d2;
+  font-weight: bold;
+}
+
+.sheet-tab:not(.active):hover {
+  background: #ececec;
 }
