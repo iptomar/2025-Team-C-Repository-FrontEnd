@@ -9,20 +9,47 @@ import { useEffect } from "react";
 import utilizadorService from "../services/utilizadorService"; // Importar o serviço de utilizadores
 import salaService from "../services/salaService"; // Importar o serviço de salas
 import ucService from "../services/ucService"; // Importar o serviço de disciplinas
+import turmaService from "../services/turmaService"; // Importar o serviço de turmas
 import connection from "../services/signalrConnection";
 import { formatRange } from "@fullcalendar/core/index.js";
+import { jwtDecode } from "jwt-decode"; // Importar a biblioteca de descodificar as JWTs
 
 const ScheduleView = () => {
+  // Novo estado para guardar info do utilizador autenticado
+  const [userRole, setUserRole] = useState("");
+  const [userId, setUserId] = useState("");
+
+  // Sem filtros aplicados
+  const [allEvents, setAllEvents] = useState([]);
+
   const [events, setEvents] = useState([]);
   const [teacher, setTeacher] = useState("");
   const [room, setRoom] = useState("");
   const [subject, setSubject] = useState("");
+  const [classList, setClassList] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Seleção - Filtro
+  const [teacherFilter, setTeacherFilter] = useState("");
+  const [roomFilter, setRoomFilter] = useState("");
+  const [classFilter, setClassFilter] = useState("");
 
   // Lista - Dropdowns
   const [teacherList, setTeacherList] = useState([]);
   const [roomList, setRoomList] = useState([]);
   const [subjectList, setSubjectList] = useState([]);
+
+  // 1. Carregar role e userId do JWT
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const decoded = jwtDecode(token);
+      setUserRole(
+        decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]
+      );
+      setUserId(String(decoded.utilizadorId));
+    }
+  }, []);
 
   // Função para buscar blocos horários da API e formatá-los para o FullCalendar
   // Esta função é chamada quando o componente é montado
@@ -60,6 +87,7 @@ const ScheduleView = () => {
         };
       });
       setEvents(apiEvents);
+      setAllEvents(apiEvents);
     } catch (error) {
       alert("Erro ao carregar blocos horários.");
     } finally {
@@ -104,6 +132,24 @@ const ScheduleView = () => {
     }
   };
 
+  // Turmas
+    const fetchTurmas = async () => {
+    try {
+      const response = await turmaService.getAll();
+      const turmas = response.data
+        .map((turma) => ({
+          idTurma: turma.idTurma,
+          nome: turma.nome,
+        }))
+        .sort((a, b) => a.id - b.id); // Ordenar por id de forma crescente
+      setClassList(turmas);
+    } catch (error) {
+      console.error("Erro ao buscar turmas:", error);
+      return [];
+    }
+  };
+
+
   // Unidades Curriculares
   const fetchUCS = async () => {
     try {
@@ -123,11 +169,14 @@ const ScheduleView = () => {
   };
 
   // Carregar blocos e as dropdowns quando o componente montar
+  // Verificar role e utilizador
   useEffect(() => {
     fetchBlocos();
     fetchProfessores();
     fetchSalas();
     fetchUCS();
+    fetchTurmas();
+
     // Iniciar conexão com o SignalR
     connection
       .start()
@@ -195,6 +244,19 @@ const ScheduleView = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (userRole || userId) {
+      if (userRole === "Docente") {
+        setTeacherFilter(userId);
+      }
+    }
+  }, [userRole, userId]);
+
+  // 3. Aplica filtros de forma automática
+  useEffect(() => {
+    applyFilters();
+  }, [teacherFilter, roomFilter, classFilter, allEvents]);
+
   // Método de criação de um bloco horário
   // Este método é chamado quando o utilizador clica em uma data no calendário
   const handleDateClick = async (info) => {
@@ -239,7 +301,6 @@ const ScheduleView = () => {
         alert("Erro ao criar bloco horário.");
         return;
       }
-       
     } else {
       alert("Por favor, preencha selecione todos os campos.");
     }
@@ -326,92 +387,187 @@ const ScheduleView = () => {
     return `${formatTime(start)} - ${formatTime(end)}`;
   };
 
+  // Aplica os filtros
+  const applyFilters = () => {
+    let filtered = allEvents;
+
+    // Filtrar por docente
+    if (teacherFilter !== "") {
+      filtered = filtered.filter(
+        (event) =>
+          String(event.extendedProps.teacherId) === String(teacherFilter)
+      );
+    }
+
+    // Filtrar por sala
+    if (roomFilter !== "") {
+      filtered = filtered.filter(
+        (event) => String(event.extendedProps.roomId) === String(roomFilter)
+      );
+    }
+
+    // Filtrar por turma
+    if (classFilter !== "") {
+      filtered = filtered.filter(
+        (event) => String(event.extendedProps.classId) === String(classFilter)
+      );
+    }
+
+    setEvents(filtered);
+  };
+
   return (
     <div className="container">
-      <div className="SideBar">
-        <h2>Criar Bloco</h2>
-        <div className="form-group">
-          <label htmlFor="teacher">Professor:</label>
-          <select
-            id="teacher"
-            value={teacher}
-            onChange={(e) => setTeacher(e.target.value)}
-          >
-            <option value="">Selecione um professor</option>
-            {teacherList && teacherList.length > 0 ? (
-              teacherList.map((prof) => (
-                <option key={prof.idUtilizador} value={prof.idUtilizador}>
-                  {prof.nome}
-                </option>
-              ))
-            ) : (
-              <option disabled>A carregar professores...</option>
-            )}
-          </select>
-        </div>
-        <div className="form-group">
-          <label htmlFor="room">Sala:</label>
-          <select
-            id="room"
-            value={room}
-            onChange={(e) => setRoom(e.target.value)}
-          >
-            <option value="">Selecione uma sala</option>
-            {roomList && roomList.length > 0 ? (
-              roomList.map((room) => (
-                <option key={room.idSala} value={room.idSala}>
-                  {room.nome}
-                </option>
-              ))
-            ) : (
-              <option disabled>A carregar salas...</option>
-            )}
-          </select>
-        </div>
-        <div className="form-group">
-          <label htmlFor="subject">Disciplina:</label>
-          <select
-            id="subject"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-          >
-            <option value="">Selecione uma Unidade Curricular</option>
-            {subjectList && subjectList.length > 0 ? (
-              subjectList.map((subject) => (
-                <option key={subject.idUC} value={subject.idUC}>
-                  {subject.nomeUC}
-                </option>
-              ))
-            ) : (
-              <option disabled>A carregar UCs...</option>
-            )}
-          </select>
-        </div>
+      {/* Sidebar só para NÃO docentes */}
+      {userRole !== "Docente" && (
+        <div className="SideBar">
+          <h2>Criar Bloco</h2>
+          <div className="form-group">
+            <label htmlFor="teacher">Professor:</label>
+            <select
+              id="teacher"
+              value={teacher}
+              onChange={(e) => setTeacher(e.target.value)}
+            >
+              <option value="">Selecione um professor</option>
+              {teacherList && teacherList.length > 0 ? (
+                teacherList.map((prof) => (
+                  <option key={prof.idUtilizador} value={prof.idUtilizador}>
+                    {prof.nome}
+                  </option>
+                ))
+              ) : (
+                <option disabled>A carregar professores...</option>
+              )}
+            </select>
+          </div>
+          <div className="form-group">
+            <label htmlFor="room">Sala:</label>
+            <select
+              id="room"
+              value={room}
+              onChange={(e) => setRoom(e.target.value)}
+            >
+              <option value="">Selecione uma sala</option>
+              {roomList && roomList.length > 0 ? (
+                roomList.map((room) => (
+                  <option key={room.idSala} value={room.idSala}>
+                    {room.nome}
+                  </option>
+                ))
+              ) : (
+                <option disabled>A carregar salas...</option>
+              )}
+            </select>
+          </div>
+          <div className="form-group">
+            <label htmlFor="subject">Disciplina:</label>
+            <select
+              id="subject"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+            >
+              <option value="">Selecione uma Unidade Curricular</option>
+              {subjectList && subjectList.length > 0 ? (
+                subjectList.map((subject) => (
+                  <option key={subject.idUC} value={subject.idUC}>
+                    {subject.nomeUC}
+                  </option>
+                ))
+              ) : (
+                <option disabled>A carregar UCs...</option>
+              )}
+            </select>
+          </div>
 
-        <div className="blocks-preview">
-          <h3>Blocos Atuais</h3>
-          <p className="instructions">
-            Preencha os campos acima e clique no calendário para criar um bloco
-          </p>
-          <div className="events-list">
-            {events.length > 0 ? (
-              events.map((event) => (
-                <div key={event.id} className="event-item">
-                  <span>{event.title}</span>
-                  <button
-                    className="delete-event-btn"
-                    onClick={() => handleDeleteEvent(event.id)}
-                  >
-                    x
-                  </button>
-                </div>
-              ))
-            ) : (
-              <p>Nenhum bloco criado ainda</p>
-            )}
+          <h2>Filtros</h2>
+          <div className="form-group">
+            <label htmlFor="teacherFilter">Docente:</label>
+            <select
+              id="teacherFilter"
+              value={teacherFilter}
+              onChange={(e) => setTeacherFilter(e.target.value)}
+              disabled={userRole === "Docente"}
+            >
+              <option value="">Selecione um docente</option>
+              {teacherList && teacherList.length > 0 ? (
+                teacherList.map((prof) => (
+                  <option key={prof.idUtilizador} value={prof.idUtilizador}>
+                    {prof.nome}
+                  </option>
+                ))
+              ) : (
+                <option disabled>A carregar docentes...</option>
+              )}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="roomFilter">Sala:</label>
+            <select
+              id="roomFilter"
+              value={roomFilter}
+              onChange={(e) => setRoomFilter(e.target.value)}
+            >
+              <option value="">Selecione uma sala</option>
+              {roomList && roomList.length > 0 ? (
+                roomList.map((room) => (
+                  <option key={room.idSala} value={room.idSala}>
+                    {room.nome}
+                  </option>
+                ))
+              ) : (
+                <option disabled>A carregar salas...</option>
+              )}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="classFilter">Turma:</label>
+            <select
+              id="classFilter"
+              value={classFilter}
+              onChange={(e) => setClassFilter(e.target.value)}
+            >
+              <option value="">Selecione uma Turma</option>
+              {classList && classList.length > 0 ? (
+                classList.map((turma) => (
+                  <option key={turma.idTurma} value={turma.idTurma}>
+                    {turma.nome}
+                  </option>
+                ))
+              ) : (
+                <option disabled>A carregar turmas...</option>
+              )}
+            </select>
+          </div>
+
+          <div className="blocks-preview">
+            <h3>Blocos Atuais</h3>
+            <p className="instructions">
+              Preencha os campos acima e clique no calendário para criar um
+              bloco
+            </p>
+            <div className="events-list">
+              {events.length > 0 ? (
+                events.map((event) => (
+                  <div key={event.id} className="event-item">
+                    <span>{event.title}</span>
+                    <button
+                      className="delete-event-btn"
+                      onClick={() => handleDeleteEvent(event.id)}
+                    >
+                      x
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <p>Nenhum bloco criado ainda</p>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
       <div className="ScheduleView">
         <FullCalendar
           plugins={[timeGridPlugin, interactionPlugin]}
