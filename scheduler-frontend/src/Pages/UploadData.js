@@ -6,6 +6,7 @@ function UploadData() {
   const [sheetsData, setSheetsData] = useState({});
   const [sheetNames, setSheetNames] = useState([]);
   const [selectedSheet, setSelectedSheet] = useState('');
+  const [showHelp, setShowHelp] = useState(false);
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -47,7 +48,7 @@ function UploadData() {
             document.body.removeChild(link);
           }}
         >
-          Download Preset File
+          Ficheiro Modelo
         </button>
         <button
           className="return-schedule-btn"
@@ -55,7 +56,37 @@ function UploadData() {
         >
           Voltar ao Horário
         </button>
+        <button
+          className="help-btn"
+          onClick={() => setShowHelp(true)}
+        >
+          Ajuda - Como usar?
+        </button>
       </div>
+      {showHelp && (
+        <div className="help-modal-bg" onClick={() => setShowHelp(false)}>
+          <div className="help-modal" onClick={e => e.stopPropagation()}>
+            <h2>Ajuda: Upload de Ficheiro Excel</h2>
+            <p><u>Se as páginas uploaded não contiverem as mesmas colunas apresentadas no ficheiro modelo, o upload <b>falhará.</b></u></p>
+            <p>Para facilitar este processo, é-lhe fornecido um ficheiro modelo, acessível nesta página.</p>
+            <p><b>Formato esperado:</b></p>
+            <ul>
+              <li>O ficheiro deve ser do tipo <b>.xlsx</b> ou <b>.xls</b>.</li>
+              <li>A primeira linha de cada folha deve conter os nomes das colunas.</li>
+              <li>As folhas devem conter dados tabulares, sem células mescladas.</li>
+            </ul>
+
+            <p><b>Dicas de uso:</b></p>
+            <ul>
+              <li>Verifique se não há células importantes, vazias.</li>
+              <li>Pode editar os dados diretamente na tabela antes de os carregar.</li>
+              <li>Use o botão "Ficheiro Modelo" para obter um modelo de ficheiro.</li>
+              <li>Após editar, pode exportar os dados para um novo Excel.</li>
+            </ul>
+            <button className="close-help-btn" onClick={() => setShowHelp(false)}>Fechar</button>
+          </div>
+        </div>
+      )}
       {sheetNames.length > 0 && (
         <div className="sheet-tabs">
           {sheetNames.map((name) => (

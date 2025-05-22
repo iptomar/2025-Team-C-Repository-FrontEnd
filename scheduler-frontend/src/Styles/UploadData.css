@@ -165,3 +165,63 @@
 .export-excel-btn:hover {
   background: #256029;
 }
+
+.help-btn {
+  font-size: 0.8rem;
+  padding: 2px 10px;
+  height: 28px;
+  min-width: 80px;
+  max-width: 200px;
+  border-radius: 4px;
+  background: #f5c242;
+  border: 1px solid #b0b8c1;
+  color: #222;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-left: 12px;
+}
+
+.help-btn:hover {
+  background: #e6a800;
+}
+
+.help-modal-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.25);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.help-modal {
+  background: #fff;
+  padding: 32px 28px 20px 28px;
+  border-radius: 8px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+  max-width: 600px;
+  width: 95vw;
+  font-size: 1rem;
+  position: relative;
+}
+
+.close-help-btn {
+  margin-top: 18px;
+  padding: 6px 18px;
+  border-radius: 4px;
+  background: #e0e0e0;
+  color: #222;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.close-help-btn:hover {
+  background: #bdbdbd;
+}
