@@ -1,5 +1,5 @@
 .upload-container {
-  padding: 0;
+  padding-top: 50px; /* Adiciona espaço para compensar o header fixo */
 }
 
 .upload-header-row {
@@ -15,7 +15,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   margin-bottom: 0;
   gap: 20px;
-  height: 72px;
+  height: 45px;
   flex-wrap: wrap;
 }
 
@@ -39,7 +39,7 @@
 .upload-table-container {
   margin-top: 20px;
   padding: 0 8px;
-  max-width: 650px;
+  max-width: 1000px;
   margin-left: auto;
   margin-right: auto;
   max-height: 600px;
@@ -52,7 +52,7 @@
 .upload-table {
   border-collapse: collapse;
   width: auto;
-  max-width: 600px;
+  max-width: 800px;
   font-size: 0.92rem;
   margin: 32px auto 0 auto;
 }
@@ -109,7 +109,7 @@
 .sheet-tabs {
   display: flex;
   gap: 8px;
-  margin: 16px 0 8px 0;
+  margin: 8px 0 0 0; /* Reduced top margin, removed bottom margin */
 }
 
 .sheet-tab {
@@ -132,4 +132,20 @@
 
 .sheet-tab:not(.active):hover {
   background: #ececec;
+}
+
+.send-sheet-btn, .send-all-btn {
+  font-size: 0.95rem;
+  padding: 8px 18px;
+  border-radius: 4px;
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-weight: 500;
+}
+
+.send-sheet-btn:hover, .send-all-btn:hover {
+  background: #1251a3;
 }

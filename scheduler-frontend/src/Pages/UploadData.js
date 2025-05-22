@@ -77,12 +77,49 @@ function UploadData() {
               {sheetsData[selectedSheet].map((row, i) => (
                 <tr key={i}>
                   {row.map((cell, j) => (
-                    <td key={j}>{cell}</td>
+                    <td key={j}
+                      contentEditable
+                      suppressContentEditableWarning
+                      onBlur={e => {
+                        const newSheetsData = { ...sheetsData };
+                        const newSheet = newSheetsData[selectedSheet].map(r => [...r]);
+                        newSheet[i][j] = e.target.innerText;
+                        newSheetsData[selectedSheet] = newSheet;
+                        setSheetsData(newSheetsData);
+                      }}
+                      style={{ minWidth: 0, padding: '4px 8px' }}
+                    >
+                      {cell}
+                    </td>
                   ))}
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+      {selectedSheet && (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '32px' }}>
+          <button
+            className="send-sheet-btn"
+            onClick={() => {
+              if (window.confirm(`Tem a certeza que quer carregar a folha "${selectedSheet}" na base de dados?`)) {
+                //TODO: lógica de envio aqui
+              }
+            }}
+          >
+            Carregar folha "{selectedSheet}" na base de dados
+          </button>
+          <button
+            className="send-all-btn"
+            onClick={() => {
+              if (window.confirm('Tem a certeza que quer carregar todas as folhas na base de dados?')) {
+                //TODO: lógica de envio aqui
+              }
+            }}
+          >
+            Carregar todas as folhas na base de dados
+          </button>
         </div>
       )}
     </div>
