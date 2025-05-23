@@ -10,19 +10,25 @@ import utilizadorService from "../services/utilizadorService"; // Importar o ser
 import salaService from "../services/salaService"; // Importar o serviço de salas
 import ucService from "../services/ucService"; // Importar o serviço de disciplinas
 import turmaService from "../services/turmaService"; // Importar o serviço de turmas
+import escolaService from "../services/escolaService"; // Importar o serviço das escolas
+import cursoService from "../services/cursoService"; // Importar o serviço de cursos
 import connection from "../services/signalrConnection";
 import { formatRange } from "@fullcalendar/core/index.js";
 import { useHistory } from "react-router-dom";
 import { jwtDecode } from "jwt-decode"; // Importar a biblioteca de descodificar as JWTs
+
 
 const ScheduleView = () => {
   // Novo estado para guardar info do utilizador autenticado
   const [userRole, setUserRole] = useState("");
   const [userId, setUserId] = useState("");
 
+  // Seleção - hierarquia
+  const [selectedSchool, setSelectedSchool] = useState("");
+  const [selectedDegree, setSelectedDegree] = useState("");
+
   // Sem filtros aplicados
   const [allEvents, setAllEvents] = useState([]);
-
   const [events, setEvents] = useState([]);
   const [teacher, setTeacher] = useState("");
   const [room, setRoom] = useState("");
@@ -36,6 +42,12 @@ const ScheduleView = () => {
   const [classFilter, setClassFilter] = useState("");
 
   // Lista - Dropdowns
+
+  // Hierarquia
+  const [schoolList, setSchoolList] = useState([]);
+  const [degreeList, setDegreeList] = useState([]);
+
+  // Criação de blocos
   const [teacherList, setTeacherList] = useState([]);
   const [roomList, setRoomList] = useState([]);
   const [subjectList, setSubjectList] = useState([]);
@@ -96,6 +108,43 @@ const ScheduleView = () => {
       setLoading(false);
     }
   };
+  // Hierarquia - Funções para carregar a escola, curso e ano (do curso)
+
+  // Escola
+  const fetchSchool = async () => {
+    try {
+      const response = await escolaService.getAll();
+      const escolas = response.data
+        .map((escolas) => ({
+          idEscola: escolas.idEscola,
+          nome: escolas.nome,
+        }))
+        .sort((a, b) => a.idEscola - b.idEscola); // Ordenar por idEscola de forma crescente
+      console.log(escolas);
+      setSchoolList(escolas);
+    } catch (error) {
+      console.error("Erro ao buscar escolas:", error);
+      return [];
+    }
+  };
+
+  // Curso
+  const fetchDegree = async () => {
+    try {
+      const response = await cursoService.getAll();
+      const cursos = response.data
+        .map((curso) => ({
+          idCurso: curso.idCurso,
+          nome: curso.nome,
+        }))
+        .sort((a, b) => a.idCurso - b.idCurso); // Ordenar por idEscola de forma crescente
+      console.log(cursos);
+      setDegreeList(cursos);
+    } catch (error) {
+      console.error("Erro ao buscar cursos:", error);
+      return [];
+    }
+  };
 
   // Funções para carregar os professores, salas e disciplinas da API
 
@@ -135,7 +184,7 @@ const ScheduleView = () => {
   };
 
   // Turmas
-    const fetchTurmas = async () => {
+  const fetchTurmas = async () => {
     try {
       const response = await turmaService.getAll();
       const turmas = response.data
@@ -150,7 +199,6 @@ const ScheduleView = () => {
       return [];
     }
   };
-
 
   // Unidades Curriculares
   const fetchUCS = async () => {
@@ -173,6 +221,11 @@ const ScheduleView = () => {
   // Carregar blocos e as dropdowns quando o componente montar
   // Verificar role e utilizador
   useEffect(() => {
+    // Dropdowns hierarquia
+    fetchSchool();
+    fetchDegree();
+
+    // Dropdowns criação blocos
     fetchBlocos();
     fetchProfessores();
     fetchSalas();
@@ -424,11 +477,64 @@ const ScheduleView = () => {
       {userRole !== "Docente" && (
         <div className="SideBar">
           <button
-          style={{ width: '100%', marginBottom: 16, background: '#57BB4C', color: 'white', fontWeight: 'bold', fontSize: '1rem', border: 'none', borderRadius: 4, padding: '10px 0', cursor: 'pointer' }}
-          onClick={() => history.push('/upload-data')}
+            style={{
+              width: "100%",
+              marginBottom: 16,
+              background: "#57BB4C",
+              color: "white",
+              fontWeight: "bold",
+              fontSize: "1rem",
+              border: "none",
+              borderRadius: 4,
+              padding: "10px 0",
+              cursor: "pointer",
+            }}
+            onClick={() => history.push("/upload-data")}
           >
-          Upload Data
+            Upload Data
           </button>
+          <h2>Hierarquia</h2>
+
+          <div className="form-group">
+            <label htmlFor="escola">Escola:</label>
+            <select
+              id="escola"
+              value={selectedSchool}
+              onChange={(e) => setSelectedSchool(e.target.value)}
+            >
+              <option value="">Selecione uma escola</option>
+              {schoolList && schoolList.length > 0 ? (
+                schoolList.map((school) => (
+                  <option key={school.idEscola} value={school.idEscola}>
+                    {school.nome}
+                  </option>
+                ))
+              ) : (
+                <option disabled>A carregar escolas...</option>
+              )}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="curso">Curso:</label>
+            <select
+              id="curso"
+              value={selectedDegree}
+              onChange={(e) => setSelectedDegree(e.target.value)}
+            >
+              <option value="">Selecione um curso</option>
+              {degreeList && degreeList.length > 0 ? (
+                degreeList.map((degree) => (
+                  <option key={degree.idCurso} value={degree.idCurso}>
+                    {degree.nome}
+                  </option>
+                ))
+              ) : (
+                <option disabled>A carregar cursos...</option>
+              )}
+            </select>
+          </div>
+
           <h2>Criar Bloco</h2>
           <div className="form-group">
             <label htmlFor="teacher">Professor:</label>
