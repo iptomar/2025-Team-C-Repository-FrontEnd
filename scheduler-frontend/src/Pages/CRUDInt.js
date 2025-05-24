@@ -90,8 +90,8 @@ function CRUDInt() {
             
           case "disciplinas":
             const disciplina = disciplinas[selectedItem];
-            const updatedDisciplina = { ...disciplina, nome: input };
-            await ucService.update(disciplina.id, updatedDisciplina);
+            const updatedDisciplina = { ...disciplina, nomeDisciplina: input };
+            await ucService.update(disciplina.idDisciplina, updatedDisciplina);
             
             // Recarregar disciplinas após atualização
             const disciplinasResponse = await ucService.getAll();
@@ -100,8 +100,8 @@ function CRUDInt() {
             
           case "turmas":
             const turma = turmas[selectedItem];
-            const updatedTurma = { ...turma, nome: input };
-            await turmaService.update(turma.id, updatedTurma);
+            const updatedTurma = { ...turma, nomeTurma: input };
+            await turmaService.update(turma.idTurma, updatedTurma);
             
             // Recarregar turmas após atualização
             const turmasResponse = await turmaService.getAll();
@@ -110,8 +110,8 @@ function CRUDInt() {
             
           case "salas":
             const sala = salas[selectedItem];
-            const updatedSala = { ...sala, nome: input };
-            await salaService.update(sala.id, updatedSala);
+            const updatedSala = { ...sala, nomeSala: input };
+            await salaService.update(sala.idSala, updatedSala);
             
             // Recarregar salas após atualização
             const salasResponse = await salaService.getAll();
