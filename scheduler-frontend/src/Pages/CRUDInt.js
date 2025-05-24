@@ -46,6 +46,7 @@ function CRUDInt() {
       // Carregar disciplinas (UCs)
       setLoading(prev => ({ ...prev, disciplinas: true }));
       const disciplinasResponse = await ucService.getAll();
+      console.log("Disciplinas carregadas:", disciplinasResponse.data);
       setDisciplinas(disciplinasResponse.data);
       setLoading(prev => ({ ...prev, disciplinas: false }));
 
@@ -222,45 +223,70 @@ function CRUDInt() {
 
   // Função para selecionar um item
   const handleSelect = (type, index) => {
-    setSelectedItem(index);
-    setSelectedType(type);
-    
+  setSelectedItem(index);
+  setSelectedType(type);
 
-    switch(type) {
-      case "professores":
-        setInput(professores[index]);
-        break;
-      case "disciplinas":
-        setInput(disciplinas[index].nome || disciplinas[index].titulo || disciplinas[index]);
-        break;
-      case "turmas":
-        setInput(turmas[index].nome || turmas[index]);
-        break;
-      case "salas":
-        setInput(salas[index].nome || salas[index]);
-        break;
-      default:
-        break;
-    }
-  };
+  switch(type) {
+    case "professores":
+      setInput(professores[index].toString());
+      break;
+    case "disciplinas":
+      setInput(disciplinas[index].nomeDisciplina || "");
+      break;
+    case "turmas":
+      const turma = turmas[index];
+      const turmaText = turma.nome || turma.titulo || turma.descricao || turma.id || 'Item sem nome';
+      setInput(turmaText.toString());
+      break;
+    case "salas":
+      const sala = salas[index];
+      const salaText = sala.nome || sala.titulo || sala.descricao || sala.id || 'Item sem nome';
+      setInput(salaText.toString());
+      break;
+    default:
+      break;
+  }
+};
+
 
   // Função para renderizar uma lista com tratamento de objetos
-  const renderList = (items, type) => {
-    return items.map((item, index) => {
+const renderList = (items, type) => {
+  return items.map((item, index) => {
+    let displayText = 'Item sem nome';
+    
+    if (typeof item === 'string') {
+      displayText = item;
+    } else {
+      switch (type) {
+        case 'disciplinas':
+          displayText = item.nomeDisciplina || `ID: ${item.idDisciplina}`;
+          break;
+        case 'professores':
+          displayText = item.nome || item.id || 'Item sem nome';
+          break;
+        case 'turmas':
+          displayText = item.nome || item.id || 'Item sem nome';
+          break;
+        case 'salas':
+          displayText = item.nome || item.id || 'Item sem nome';
+          break;
+        default:
+          displayText = item.nome || item.id || 'Item sem nome';
+      }
+    }
 
-      const displayText = typeof item === 'string' ? item : (item.nome || item.titulo || item.id || 'Item sem nome');
-      
-      return (
-        <li
-          key={index}
-          onClick={() => handleSelect(type, index)}
-          className={selectedItem === index && selectedType === type ? "selected" : ""}
-        >
-          {displayText}
-        </li>
-      );
-    });
-  };
+    return (
+      <li
+        key={index}
+        onClick={() => handleSelect(type, index)}
+        className={selectedItem === index && selectedType === type ? "selected" : ""}
+      >
+        {displayText}
+      </li>
+    );
+  });
+};
+
 
   return (
     <div style={{ padding: "20px" }}>
