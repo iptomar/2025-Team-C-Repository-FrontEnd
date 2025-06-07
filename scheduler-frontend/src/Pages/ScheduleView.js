@@ -495,36 +495,96 @@ const ScheduleView = () => {
       // Cabeçalho
       doc.setFontSize(14);
       doc.text(`Horário da semana começando em ${weekKey}`, 14, 15);
-      // Construir matriz da tabela
-      const tableBody = slots.map((slot) => {
-        // slot está no formato "08:30 - 09:00"
+      // Construir matriz da tabela, agrupando blocos exatamente iguais, conectados, no mesmo dia, desenhando só no início
+      const tableBody = [];
+      for (let rowIndex = 0; rowIndex < slots.length; rowIndex++) {
+        const slot = slots[rowIndex];
         const slotStartTime = slot.split(" - ")[0];
+        const slotEndTime = slot.split(" - ")[1];
         const row = [slot];
         for (let d = 0; d < days.length; d++) {
-          // Calcular data do dia da semana
           const weekStartDate = new Date(weekKey);
           weekStartDate.setDate(weekStartDate.getDate() + d);
           const dayStr = weekStartDate.toISOString().slice(0, 10);
           // Procurar bloco neste slot
-          const bloco = weekEvents.find((ev) => {
+          let bloco = weekEvents.find((ev) => {
             const evStart = new Date(ev.start);
             const evEnd = new Date(ev.end);
-            const slotDate = new Date(`${dayStr}T${slotStartTime}:00`);
+            const slotDateStart = new Date(`${dayStr}T${slotStartTime}:00`);
+            const slotDateEnd = new Date(`${dayStr}T${slotEndTime}:00`);
             return (
-              evStart <= slotDate && slotDate < evEnd &&
+              evStart <= slotDateStart && slotDateEnd <= evEnd &&
               evStart.getDay() === weekStartDate.getDay()
             );
           });
           if (bloco) {
-            row.push(
-              `${bloco.extendedProps.subject || ""}\n${bloco.extendedProps.teacher || ""}\nSala: ${bloco.extendedProps.room || ""}`
-            );
+            // Só desenhar se for o início do bloco (não existe bloco igual no slot anterior)
+            let isBlockStart = true;
+            if (rowIndex > 0) {
+              const prevSlotStartTime = slots[rowIndex - 1].split(" - ")[0];
+              const prevSlotEndTime = slots[rowIndex - 1].split(" - ")[1];
+              const prevBloco = weekEvents.find((ev) => {
+                const evStart = new Date(ev.start);
+                const evEnd = new Date(ev.end);
+                const slotDateStart = new Date(`${dayStr}T${prevSlotStartTime}:00`);
+                const slotDateEnd = new Date(`${dayStr}T${prevSlotEndTime}:00`);
+                return (
+                  evStart <= slotDateStart && slotDateEnd <= evEnd &&
+                  evStart.getDay() === weekStartDate.getDay()
+                );
+              });
+              if (
+                prevBloco &&
+                bloco.extendedProps.subject === prevBloco.extendedProps.subject &&
+                bloco.extendedProps.teacher === prevBloco.extendedProps.teacher &&
+                bloco.extendedProps.room === prevBloco.extendedProps.room &&
+                bloco.id === prevBloco.id
+              ) {
+                isBlockStart = false;
+              }
+            }
+            if (isBlockStart) {
+              // Calcular o rowSpan (quantos slots este bloco cobre a partir daqui)
+              let span = 1;
+              for (let nextIndex = rowIndex + 1; nextIndex < slots.length; nextIndex++) {
+                const nextSlotStartTime = slots[nextIndex].split(" - ")[0];
+                const nextSlotEndTime = slots[nextIndex].split(" - ")[1];
+                const nextBloco = weekEvents.find((ev) => {
+                  const evStart = new Date(ev.start);
+                  const evEnd = new Date(ev.end);
+                  const slotDateStart = new Date(`${dayStr}T${nextSlotStartTime}:00`);
+                  const slotDateEnd = new Date(`${dayStr}T${nextSlotEndTime}:00`);
+                  return (
+                    evStart <= slotDateStart && slotDateEnd <= evEnd &&
+                    evStart.getDay() === weekStartDate.getDay()
+                  );
+                });
+                if (
+                  nextBloco &&
+                  bloco.extendedProps.subject === nextBloco.extendedProps.subject &&
+                  bloco.extendedProps.teacher === nextBloco.extendedProps.teacher &&
+                  bloco.extendedProps.room === nextBloco.extendedProps.room &&
+                  bloco.id === nextBloco.id
+                ) {
+                  span++;
+                } else {
+                  break;
+                }
+              }
+              row.push({
+                content: `${bloco.extendedProps.subject || ""}\n${bloco.extendedProps.teacher || ""}\nSala: ${bloco.extendedProps.room || ""}`,
+                rowSpan: span,
+                styles: { valign: 'middle' }
+              });
+            } else {
+              row.push("");
+            }
           } else {
             row.push("");
           }
         }
-        return row;
-      });
+        tableBody.push(row);
+      }
       autoTable(doc, {
         head: [["Hora", ...days]],
         body: tableBody,
