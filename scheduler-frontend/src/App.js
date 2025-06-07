@@ -7,6 +7,7 @@ import Login from './Pages/Login';
 import ScheduleView from "./Pages/ScheduleView";
 import { useEffect, useState } from 'react';
 import Home from './Pages/Home'; // Página inicial
+import UploadData from './Pages/UploadData';
 
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
         <Switch>
           <Route path="/login" component={Login} />
           <Route path="/schedule" component={ScheduleView} />
+          <Route path="/upload-data" component={UploadData} />
           <Route path="/crud" component={CRUDInt} />
           <Route path="/" component={Home} />
         </Switch>

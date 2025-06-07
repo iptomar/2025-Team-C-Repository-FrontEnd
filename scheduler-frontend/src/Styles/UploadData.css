@@ -1,0 +1,227 @@
+.upload-container {
+  padding-top: 50px; /* Adiciona espaço para compensar o header fixo */
+}
+
+.upload-header-row {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  background: #fff;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  margin-bottom: 0;
+  gap: 20px;
+  height: 45px;
+  flex-wrap: wrap;
+}
+
+.upload-title {
+  margin: 0;
+  margin-right: 12px;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.upload-input[type="file"] {
+  font-size: 0.95rem;
+  padding: 2px 6px;
+  height: 28px;
+  max-width: 400px;
+  box-sizing: border-box;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.upload-table-container {
+  margin-top: 20px;
+  padding: 0 8px;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+  max-height: 600px;
+  overflow-y: auto;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  border-radius: 6px;
+}
+
+.upload-table {
+  border-collapse: collapse;
+  width: auto;
+  max-width: 800px;
+  font-size: 0.92rem;
+  margin: 32px auto 0 auto;
+}
+
+.upload-table th,
+.upload-table td {
+  border: 1px solid #ccc;
+  padding: 4px 8px;
+  text-align: left;
+}
+
+.upload-table th {
+  background: #f5f5f5;
+}
+
+.download-preset-btn {
+  font-size: 0.8rem;
+  padding: 2px 10px;
+  height: 28px;
+  min-width: 80px;
+  max-width: 200px;
+  border-radius: 4px;
+  background: #e0e7ef;
+  border: 1px solid #b0b8c1;
+  color: #222;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-left: 12px;
+}
+
+.download-preset-btn:hover {
+  background: #c9d6e3;
+}
+
+.return-schedule-btn {
+  font-size: 0.8rem;
+  padding: 2px 10px;
+  height: 28px;
+  min-width: 80px;
+  max-width: 200px;
+  border-radius: 4px;
+  background: #e0f7e7;
+  border: 1px solid #7fc8a9;
+  color: #222;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-left: 12px;
+}
+
+.return-schedule-btn:hover {
+  background: #b2f0d6;
+}
+
+.sheet-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 0 0; /* Reduced top margin, removed bottom margin */
+}
+
+.sheet-tab {
+  padding: 4px 12px;
+  font-size: 0.95rem;
+  border: 1px solid #ccc;
+  background: #f7f7f7;
+  border-radius: 4px 4px 0 0;
+  cursor: pointer;
+  transition: background 0.2s, border 0.2s;
+  margin-bottom: -1px;
+  color: #111;
+}
+
+.sheet-tab.active {
+  background: #e0e0e0;
+  border-bottom: 2px solid #1976d2;
+  font-weight: bold;
+}
+
+.sheet-tab:not(.active):hover {
+  background: #ececec;
+}
+
+.send-sheet-btn, .send-all-btn {
+  font-size: 0.95rem;
+  padding: 8px 18px;
+  border-radius: 4px;
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-weight: 500;
+}
+
+.send-sheet-btn:hover, .send-all-btn:hover {
+  background: #1251a3;
+}
+
+.export-excel-btn {
+  font-size: 0.95rem;
+  padding: 8px 18px;
+  border-radius: 4px;
+  background: #388e3c;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-weight: 500;
+}
+
+.export-excel-btn:hover {
+  background: #256029;
+}
+
+.help-btn {
+  font-size: 0.8rem;
+  padding: 2px 10px;
+  height: 28px;
+  min-width: 80px;
+  max-width: 200px;
+  border-radius: 4px;
+  background: #f5c242;
+  border: 1px solid #b0b8c1;
+  color: #222;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-left: 12px;
+}
+
+.help-btn:hover {
+  background: #e6a800;
+}
+
+.help-modal-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.25);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.help-modal {
+  background: #fff;
+  padding: 32px 28px 20px 28px;
+  border-radius: 8px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+  max-width: 600px;
+  width: 95vw;
+  font-size: 1rem;
+  position: relative;
+}
+
+.close-help-btn {
+  margin-top: 18px;
+  padding: 6px 18px;
+  border-radius: 4px;
+  background: #e0e0e0;
+  color: #222;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.close-help-btn:hover {
+  background: #bdbdbd;
+}
