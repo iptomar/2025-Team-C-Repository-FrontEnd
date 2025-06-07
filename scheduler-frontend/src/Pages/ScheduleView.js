@@ -508,7 +508,7 @@ const ScheduleView = () => {
         filename: "horario.pdf",
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: { scale: 2 },
-        jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+        jsPDF: { unit: "in", format: "a4", orientation: "landscape" },
       })
       .save();
   }
@@ -551,7 +551,8 @@ const ScheduleView = () => {
               cursor: "pointer",
             }} 
             onClick={(pdf)} 
-          ></button>  
+            >Exportar PDF</button>
+           
 
           <div className="form-group" data-html2canvas-ignore>
             <label htmlFor="escola">Escola:</label>
