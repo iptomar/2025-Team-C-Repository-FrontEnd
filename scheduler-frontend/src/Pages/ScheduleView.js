@@ -16,7 +16,7 @@ import connection from "../services/signalrConnection";
 import { formatRange } from "@fullcalendar/core/index.js";
 import { useHistory } from "react-router-dom";
 import { jwtDecode } from "jwt-decode"; // Importar a biblioteca de descodificar as JWTs
-import html2pdf from "html2pdf.js"; // Importar a biblioteca para exportar PDF
+import jsPDF from "jspdf";
 
 const ScheduleView = () => {
   // Novo estado para guardar info do utilizador autenticado
@@ -501,16 +501,67 @@ const ScheduleView = () => {
 
   // Método para exportar o calendário para PDF
   async function pdf() {
-    html2pdf()
-      .from(document.querySelector(".ScheduleView"))
-      .set({
-        margin: 1,
-        filename: "horario.pdf",
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: "in", format: "a4", orientation: "landscape" },
-      })
-      .save();
+    const original = document.querySelector(".ScheduleView");
+
+    // Clona o elemento para evitar afetar o original
+    const clone = original.cloneNode(true);
+
+    // Container invisível para medir e renderizar
+    const container = document.createElement("div");
+    container.style.position = "fixed";
+    container.style.top = "0";
+    container.style.left = "0";
+    container.style.width = "auto";
+    container.style.height = "auto";
+    container.style.opacity = "0";
+    container.style.pointerEvents = "none";
+    container.style.zIndex = "-1";
+    container.appendChild(clone);
+    document.body.appendChild(container);
+
+    // Esperar layout
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // Medir dimensões reais em pixels
+    const width = clone.scrollWidth;
+    const height = clone.scrollHeight;
+
+   // Dimensões da folha A4 paisagem (em pontos)
+   const pageWidth = 842; // pt
+    const pageHeight = 595; // pt
+
+   // Converter px para pt (1px = 0.75pt)
+    const widthPt = width * 0.75;
+    const heightPt = height * 0.75;
+
+   // Calcular escala para caber
+    const scaleX = pageWidth / widthPt;
+    const scaleY = pageHeight / heightPt;
+    const scale = Math.min(scaleX, scaleY, 1);
+
+    // Aplicar transformação ao clone
+    clone.style.transform = `scale(${scale})`;
+    clone.style.transformOrigin = "top left";
+
+    // Criar documento
+   const doc = new jsPDF({
+     orientation: "landscape",
+     unit: "pt",
+     format: "a4",
+    });
+
+    await doc.html(clone, {
+      x: 0,
+      y: 0,
+      html2canvas: {
+        scale: 1,
+        useCORS: true,
+      },
+      callback: function (doc) {
+        doc.save("horario.pdf");
+        document.body.removeChild(container); // limpa DOM
+      }
+    });
   }
 
   return (
