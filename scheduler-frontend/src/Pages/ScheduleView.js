@@ -515,64 +515,49 @@ const ScheduleView = () => {
           return `${abbr} ${dayNum}/${monthNum}`;
         })
       ];
-      // Para cada slot e dia, vamos marcar se já foi "ocupado" por um bloco (para o rowSpan)
-      const occupied = Array(slots.length).fill(0).map(() => Array(days.length).fill(false));
-      const tableBody = [];
-      for (let rowIndex = 0; rowIndex < slots.length; rowIndex++) {
-        const slot = slots[rowIndex];
-        const slotStartTime = slot.split(" - ")[0];
-        const slotEndTime = slot.split(" - ")[1];
-        const row = [slot];
-        for (let d = 0; d < days.length; d++) {
-          if (occupied[rowIndex][d]) {
-            row.push("");
-            continue;
-          }
-          // Corrigir: calcular corretamente a data do dia d SEM mutar weekStartDateBase
-          const weekStartDate = new Date(weekStartDateBase);
-          weekStartDate.setDate(weekStartDateBase.getDate() + d);
-          const dayStr = weekStartDate.toISOString().slice(0, 10);
-          // Procurar bloco que começa exatamente neste slot
-          let bloco = weekEvents.find((ev) => {
-            const evStart = new Date(ev.start);
-            const evEnd = new Date(ev.end);
-            const slotDateStart = new Date(`${dayStr}T${slotStartTime}:00`);
-            return (
-              evStart.getTime() === slotDateStart.getTime() &&
-              evStart.getDay() === weekStartDate.getDay()
-            );
-          });
-          if (bloco) {
-            // Calcular o rowSpan: quantos slots de 30min o bloco cobre
-            const evStart = new Date(bloco.start);
-            const evEnd = new Date(bloco.end);
-            let span = 0;
-            for (let nextIndex = rowIndex; nextIndex < slots.length; nextIndex++) {
-              const nextSlotStartTime = slots[nextIndex].split(" - ")[0];
-              const nextSlotEndTime = slots[nextIndex].split(" - ")[1];
-              const slotDateStart = new Date(`${dayStr}T${nextSlotStartTime}:00`);
-              const slotDateEnd = new Date(`${dayStr}T${nextSlotEndTime}:00`);
-              if (evStart < slotDateEnd && evEnd > slotDateStart) {
-                span++;
-                occupied[nextIndex][d] = true;
-              } else {
-                break;
-              }
-            }
-            row.push({
-              content: `${bloco.extendedProps.subject || ""}\n${bloco.extendedProps.teacher || ""}\nSala: ${bloco.extendedProps.room || ""}`,
-              rowSpan: span,
-              styles: { valign: 'middle' }
-            });
-          } else {
-            row.push("");
-          }
-        }
-        tableBody.push(row);
+      // Nova lógica: para cada bloco da semana, coloca-o na célula correta do PDF
+      // 1. Montar matriz vazia para o corpo da tabela
+      const tableBody = Array(slots.length).fill(0).map(() => Array(days.length + 1).fill(""));
+      // 2. Preencher coluna 0 com os horários
+      for (let i = 0; i < slots.length; i++) {
+        tableBody[i][0] = slots[i];
       }
+      // 3. Para cada bloco, calcular a posição (linha, coluna) e o rowSpan
+      weekEvents.forEach((bloco) => {
+        const evStart = new Date(bloco.start);
+        const evEnd = new Date(bloco.end);
+        // Descobrir coluna (dia da semana)
+        let weekStart = new Date(weekKey);
+        if (weekStart.getDay() === 0) weekStart.setDate(weekStart.getDate() + 1); // segunda
+        let col = Math.floor((evStart - weekStart) / (1000 * 60 * 60 * 24));
+        if (col < 0 || col > 5) return; // fora da semana
+        // Descobrir linha (slot)
+        const startHour = evStart.getHours();
+        const startMin = evStart.getMinutes();
+        const slotIdx = slots.findIndex(s => {
+          const [h, m] = s.split(" - ")[0].split(":").map(Number);
+          return h === startHour && m === startMin;
+        });
+        if (slotIdx === -1) return; // slot não encontrado
+        // Calcular rowSpan
+        const duration = (evEnd - evStart) / (1000 * 60); // em minutos
+        const span = Math.round(duration / 30);
+        // Preencher célula
+        tableBody[slotIdx][col + 1] = {
+          content: `${bloco.extendedProps.subject || ""}\n${bloco.extendedProps.teacher || ""}\nSala: ${bloco.extendedProps.room || ""}`,
+          rowSpan: span,
+          styles: { valign: 'middle' }
+        };
+        // Marcar slots ocupados para não duplicar
+        for (let i = 1; i < span; i++) {
+          if (tableBody[slotIdx + i]) tableBody[slotIdx + i][col + 1] = null;
+        }
+      });
+      // 4. Remover células nulas (slots ocupados por rowSpan)
+      const finalBody = tableBody.map(row => row.filter(cell => cell !== null));
       autoTable(doc, {
         head: [weekHeader],
-        body: tableBody,
+        body: finalBody,
         startY: 15,
         margin: { left: 5, right: 5 },
         styles: { cellPadding: 1, fontSize: 7, minCellHeight: 4 },
