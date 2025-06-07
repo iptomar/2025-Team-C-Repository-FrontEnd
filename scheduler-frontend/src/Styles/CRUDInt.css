@@ -1,29 +1,22 @@
-/* Estilo geral */
-body {
-  font-family: Arial, sans-serif;
-  background-color: #f4f4f9; 
-  margin: 0;
-  padding: 0;
-}
-
-/* Contêiner principal */
-div {
+/* Estilo específico para o componente CRUD */
+.crud-int-container {
   max-width: 800px;
   margin: 20px auto;
   padding: 20px;
   background: #ffffff; 
   border-radius: 8px;
+  font-family: Arial, sans-serif;
 }
 
 /* Botões de categoria */
-.category-buttons {
+.crud-int-container .category-buttons {
   display: flex;
   justify-content: center;
   margin-bottom: 20px;
   gap: 10px;
 }
 
-.category-button {
+.crud-int-container .category-button {
   padding: 10px 15px;
   background-color: #f0f0f0;
   color: #333;
@@ -34,11 +27,11 @@ div {
   transition: all 0.3s ease;
 }
 
-.category-button:hover {
+.crud-int-container .category-button:hover {
   background-color: #e0e0e0;
 }
 
-.category-button.selected {
+.crud-int-container .category-button.selected {
   background-color: rgb(87, 187, 76);
   color: white;
   border-color: rgb(70, 160, 60);
@@ -46,13 +39,13 @@ div {
 }
 
 /* Títulos */
-h1 {
+.crud-int-container h1 {
   text-align: center;
   color: #333333;
   margin-bottom: 20px;
 }
 
-h2 {
+.crud-int-container h2 {
   color: #444444;
   margin-top: 20px;
   border-bottom: 2px solid rgb(87, 187, 76); 
@@ -60,7 +53,7 @@ h2 {
 }
 
 /* Campo de input */
-input[type="text"] {
+.crud-int-container input[type="text"] {
   width: calc(100% - 120px);
   padding: 10px;
   margin-right: 10px;
@@ -70,7 +63,7 @@ input[type="text"] {
 }
 
 /* Botões */
-button {
+.crud-int-container button {
   padding: 10px 15px;
   margin-top: 15px;
   background-color: rgb(87, 187, 76); 
@@ -83,16 +76,16 @@ button {
   margin-right: 10px;
 }
 
-button:hover {
+.crud-int-container button:hover {
   background-color: rgb(70, 160, 60);
 }
 
-button:disabled {
+.crud-int-container button:disabled {
   background-color: #cccccc; 
   cursor: not-allowed;
 }
 
-.scrollable-list {
+.crud-int-container .scrollable-list {
   max-height: 150px; 
   overflow-y: auto; 
   border: 1px solid #cccccc;
@@ -102,22 +95,51 @@ button:disabled {
   background-color: #f9f9f9;
 }
 
-.scrollable-list li {
+.crud-int-container .scrollable-list li {
   padding: 8px;
   cursor: pointer;
   border-bottom: 1px solid #eeeeee;
   text-align: center; 
 }
 
-.scrollable-list li:last-child {
+.crud-int-container .scrollable-list li:last-child {
   border-bottom: none;
 }
 
-.scrollable-list li:hover {
+.crud-int-container .scrollable-list li:hover {
   background-color: #e0e0e0; 
 }
 
-.scrollable-list li.selected {
+.crud-int-container .scrollable-list li.selected {
   background-color: rgb(87, 187, 76); 
   color: white;
+}
+
+.crud-int-container .error-message {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  border-left: 4px solid #c62828;
+}
+
+.crud-int-container .info-message {
+  background-color: #e6f7ff;
+  color: #0066cc;
+  padding: 6px 8px;
+  border-radius: 3px;
+  margin-bottom: 10px;
+  border-left: 3px solid #0066cc;
+  font-size: 12px;
+}
+
+.crud-int-container .action-buttons-container {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.crud-int-container .action-button {
+  flex: 1;
 }

@@ -400,7 +400,7 @@ function CRUDInt() {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div className="crud-int-container">
       <h1>Gestão de Professores, Disciplinas, Turmas e Salas</h1>
 
       {/* Mensagem de erro */}
@@ -408,8 +408,8 @@ function CRUDInt() {
       
       {/* Mensagem se estiver usando dados mock */}
       {useMockData && (
-        <div className="info-message" style={{ backgroundColor: "#e6f7ff", color: "#0066cc", padding: "6px 8px", borderRadius: "3px", marginBottom: "10px", borderLeft: "3px solid #0066cc", fontSize: "12px" }}>
-          Backend não disponível. Usando dados de demonstração.
+        <div className="info-message">
+          Backend não disponível. A usar dados de demonstração.
         </div>
       )}
 
