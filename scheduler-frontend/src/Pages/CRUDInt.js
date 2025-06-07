@@ -7,6 +7,30 @@ import salaService from "../services/salaService";
 import ucService from "../services/ucService"; // Para disciplinas
 import api from "../services/api"; // Para requisições diretas se necessário
 
+// Dados mock para quando a API não está disponível
+const mockData = {
+  professores: [
+    { id: 1, nome: "João Silva" },
+    { id: 2, nome: "Maria Oliveira" },
+    { id: 3, nome: "Carlos Santos" }
+  ],
+  disciplinas: [
+    { idUC: 1, nomeUC: "Matemática" },
+    { idUC: 2, nomeUC: "Programação" },
+    { idUC: 3, nomeUC: "Física" }
+  ],
+  turmas: [
+    { idTurma: 1, nome: "Turma A" },
+    { idTurma: 2, nome: "Turma B" },
+    { idTurma: 3, nome: "Turma C" }
+  ],
+  salas: [
+    { idSala: 1, nome: "Sala 101" },
+    { idSala: 2, nome: "Sala 102" },
+    { idSala: 3, nome: "Laboratório 1" }
+  ]
+};
+
 function CRUDInt() {
   // Estados para armazenar os dados
   const [professores, setProfessores] = useState([]);
@@ -24,12 +48,14 @@ function CRUDInt() {
   
   // Estado para mensagens de erro
   const [error, setError] = useState(null);
+  
+  // Flag para usar dados mock quando a API falha
+  const [useMockData, setUseMockData] = useState(false);
 
   // Estados para os inputs e seleção
   const [input, setInput] = useState("");
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedType, setSelectedType] = useState("professores");
-
 
   useEffect(() => {
     fetchData();
@@ -40,31 +66,66 @@ function CRUDInt() {
     try {
       // Carregar dados de professores
       setLoading(prev => ({ ...prev, professores: true }));
-      
+      // Como não temos um endpoint para professores, usamos os dados mock
+      setProfessores(mockData.professores);
       setLoading(prev => ({ ...prev, professores: false }));
 
-      // Carregar disciplinas (UCs)
-      setLoading(prev => ({ ...prev, disciplinas: true }));
-      const disciplinasResponse = await ucService.getAll();
-      console.log("Disciplinas carregadas:", disciplinasResponse.data);
-      setDisciplinas(disciplinasResponse.data);
-      setLoading(prev => ({ ...prev, disciplinas: false }));
+      try {
+        // Tentamos carregar disciplinas da API
+        setLoading(prev => ({ ...prev, disciplinas: true }));
+        const disciplinasResponse = await ucService.getAll();
+        setDisciplinas(disciplinasResponse.data);
+        setLoading(prev => ({ ...prev, disciplinas: false }));
+      } catch (err) {
+        console.log("Usando dados mock para disciplinas:", err.message);
+        setDisciplinas(mockData.disciplinas);
+        setLoading(prev => ({ ...prev, disciplinas: false }));
+        setUseMockData(true);
+      }
 
-      // Carregar turmas
-      setLoading(prev => ({ ...prev, turmas: true }));
-      const turmasResponse = await turmaService.getAll();
-      setTurmas(turmasResponse.data);
-      setLoading(prev => ({ ...prev, turmas: false }));
+      try {
+        // Tentamos carregar turmas da API
+        setLoading(prev => ({ ...prev, turmas: true }));
+        const turmasResponse = await turmaService.getAll();
+        setTurmas(turmasResponse.data);
+        setLoading(prev => ({ ...prev, turmas: false }));
+      } catch (err) {
+        console.log("Usando dados mock para turmas:", err.message);
+        setTurmas(mockData.turmas);
+        setLoading(prev => ({ ...prev, turmas: false }));
+        setUseMockData(true);
+      }
 
-      // Carregar salas
-      setLoading(prev => ({ ...prev, salas: true }));
-      const salasResponse = await salaService.getAll();
-      setSalas(salasResponse.data);
-      setLoading(prev => ({ ...prev, salas: false }));
+      try {
+        // Tentamos carregar salas da API
+        setLoading(prev => ({ ...prev, salas: true }));
+        const salasResponse = await salaService.getAll();
+        setSalas(salasResponse.data);
+        setLoading(prev => ({ ...prev, salas: false }));
+      } catch (err) {
+        console.log("Usando dados mock para salas:", err.message);
+        setSalas(mockData.salas);
+        setLoading(prev => ({ ...prev, salas: false }));
+        setUseMockData(true);
+      }
 
+      // Se algum carregamento falhou, mostra alerta
+      if (useMockData) {
+        setError("API indisponível. Usando dados mock para demonstração.");
+      } else {
+        setError(null);
+      }
     } catch (err) {
-      setError("Erro ao carregar dados da API: " + err.message);
+      setError("Erro ao carregar dados: " + err.message);
       console.error("Erro ao carregar dados:", err);
+      
+      // Usar dados mock se a API falhar
+      setProfessores(mockData.professores);
+      setDisciplinas(mockData.disciplinas);
+      setTurmas(mockData.turmas);
+      setSalas(mockData.salas);
+      setUseMockData(true);
+      
       setLoading({
         professores: false,
         disciplinas: false,
@@ -83,39 +144,71 @@ function CRUDInt() {
         // Editar item existente
         switch (selectedType) {
           case "professores":
+            // Como não temos API para professores, atualizamos só na memória
             const updatedProfessores = [...professores];
-            updatedProfessores[selectedItem] = input;
+            updatedProfessores[selectedItem] = { 
+              ...professores[selectedItem], 
+              nome: input 
+            };
             setProfessores(updatedProfessores);
             break;
             
           case "disciplinas":
-            const disciplina = disciplinas[selectedItem];
-            const updatedDisciplina = { ...disciplina, nomeDisciplina: input };
-            await ucService.update(disciplina.idDisciplina, updatedDisciplina);
-            
-            // Recarregar disciplinas após atualização
-            const disciplinasResponse = await ucService.getAll();
-            setDisciplinas(disciplinasResponse.data);
+            if (useMockData) {
+              const updatedDisciplinas = [...disciplinas];
+              updatedDisciplinas[selectedItem] = { 
+                ...disciplinas[selectedItem], 
+                nomeUC: input 
+              };
+              setDisciplinas(updatedDisciplinas);
+            } else {
+              const disciplina = disciplinas[selectedItem];
+              const id = disciplina.idUC || disciplina.IdUC;
+              const updatedDisciplina = { 
+                ...disciplina, 
+                nomeUC: input,
+                NomeUC: input // Para compatibilidade com diferentes propriedades
+              };
+              await ucService.update(id, updatedDisciplina);
+              const disciplinasResponse = await ucService.getAll();
+              setDisciplinas(disciplinasResponse.data);
+            }
             break;
             
           case "turmas":
-            const turma = turmas[selectedItem];
-            const updatedTurma = { ...turma, nomeTurma: input };
-            await turmaService.update(turma.idTurma, updatedTurma);
-            
-            // Recarregar turmas após atualização
-            const turmasResponse = await turmaService.getAll();
-            setTurmas(turmasResponse.data);
+            if (useMockData) {
+              const updatedTurmas = [...turmas];
+              updatedTurmas[selectedItem] = { 
+                ...turmas[selectedItem], 
+                nome: input 
+              };
+              setTurmas(updatedTurmas);
+            } else {
+              const turma = turmas[selectedItem];
+              const id = turma.idTurma || turma.id;
+              const updatedTurma = { ...turma, nome: input };
+              await turmaService.update(id, updatedTurma);
+              const turmasResponse = await turmaService.getAll();
+              setTurmas(turmasResponse.data);
+            }
             break;
             
           case "salas":
-            const sala = salas[selectedItem];
-            const updatedSala = { ...sala, nomeSala: input };
-            await salaService.update(sala.idSala, updatedSala);
-            
-            // Recarregar salas após atualização
-            const salasResponse = await salaService.getAll();
-            setSalas(salasResponse.data);
+            if (useMockData) {
+              const updatedSalas = [...salas];
+              updatedSalas[selectedItem] = { 
+                ...salas[selectedItem], 
+                nome: input 
+              };
+              setSalas(updatedSalas);
+            } else {
+              const sala = salas[selectedItem];
+              const id = sala.idSala || sala.id;
+              const updatedSala = { ...sala, nome: input };
+              await salaService.update(id, updatedSala);
+              const salasResponse = await salaService.getAll();
+              setSalas(salasResponse.data);
+            }
             break;
             
           default:
@@ -125,35 +218,56 @@ function CRUDInt() {
         // Adicionar novo item
         switch (selectedType) {
           case "professores":
-            setProfessores([...professores, input]);
+            const newProfessor = { 
+              id: professores.length + 1, 
+              nome: input 
+            };
+            setProfessores([...professores, newProfessor]);
             break;
             
           case "disciplinas":
-            // Criando uma nova disciplina (UC)
-            const newDisciplina = { nome: input };
-            await ucService.create(newDisciplina);
-            
-            // Recarregar disciplinas após adição
-            const disciplinasResponse = await ucService.getAll();
-            setDisciplinas(disciplinasResponse.data);
+            if (useMockData) {
+              const newDisciplina = { 
+                idUC: disciplinas.length + 1, 
+                nomeUC: input 
+              };
+              setDisciplinas([...disciplinas, newDisciplina]);
+            } else {
+              const newDisciplina = { nome: input };
+              await ucService.create(newDisciplina);
+              const disciplinasResponse = await ucService.getAll();
+              setDisciplinas(disciplinasResponse.data);
+            }
             break;
             
           case "turmas":
-            const newTurma = { nome: input };
-            await turmaService.create(newTurma);
-            
-            // Recarregar turmas após adição
-            const turmasResponse = await turmaService.getAll();
-            setTurmas(turmasResponse.data);
+            if (useMockData) {
+              const newTurma = { 
+                idTurma: turmas.length + 1, 
+                nome: input 
+              };
+              setTurmas([...turmas, newTurma]);
+            } else {
+              const newTurma = { nome: input };
+              await turmaService.create(newTurma);
+              const turmasResponse = await turmaService.getAll();
+              setTurmas(turmasResponse.data);
+            }
             break;
             
           case "salas":
-            const newSala = { nome: input };
-            await salaService.create(newSala);
-            
-            // Recarregar salas após adição
-            const salasResponse = await salaService.getAll();
-            setSalas(salasResponse.data);
+            if (useMockData) {
+              const newSala = { 
+                idSala: salas.length + 1, 
+                nome: input 
+              };
+              setSalas([...salas, newSala]);
+            } else {
+              const newSala = { nome: input };
+              await salaService.create(newSala);
+              const salasResponse = await salaService.getAll();
+              setSalas(salasResponse.data);
+            }
             break;
             
           default:
@@ -163,7 +277,6 @@ function CRUDInt() {
       
       setInput(""); // Limpar o campo de input
       setSelectedItem(null); // Limpar seleção
-      setError(null); // Limpar mensagens de erro
       
     } catch (err) {
       setError(`Erro ao ${selectedItem !== null ? 'editar' : 'adicionar'} ${selectedType}: ${err.message}`);
@@ -182,30 +295,39 @@ function CRUDInt() {
           break;
           
         case "disciplinas":
-          const disciplina = disciplinas[selectedItem];
-          await ucService.delete(disciplina.id);
-          
-          // Recarregar disciplinas após eliminacao
-          const disciplinasResponse = await ucService.getAll();
-          setDisciplinas(disciplinasResponse.data);
+          if (useMockData) {
+            setDisciplinas(disciplinas.filter((_, i) => i !== selectedItem));
+          } else {
+            const disciplina = disciplinas[selectedItem];
+            const id = disciplina.idUC || disciplina.IdUC;
+            await ucService.delete(id);
+            const disciplinasResponse = await ucService.getAll();
+            setDisciplinas(disciplinasResponse.data);
+          }
           break;
           
         case "turmas":
-          const turma = turmas[selectedItem];
-          await turmaService.delete(turma.id);
-          
-          // Recarregar turmas após eliminacao
-          const turmasResponse = await turmaService.getAll();
-          setTurmas(turmasResponse.data);
+          if (useMockData) {
+            setTurmas(turmas.filter((_, i) => i !== selectedItem));
+          } else {
+            const turma = turmas[selectedItem];
+            const id = turma.idTurma || turma.id;
+            await turmaService.delete(id);
+            const turmasResponse = await turmaService.getAll();
+            setTurmas(turmasResponse.data);
+          }
           break;
           
         case "salas":
-          const sala = salas[selectedItem];
-          await salaService.delete(sala.id);
-          
-          // Recarregar salas após eliminacao
-          const salasResponse = await salaService.getAll();
-          setSalas(salasResponse.data);
+          if (useMockData) {
+            setSalas(salas.filter((_, i) => i !== selectedItem));
+          } else {
+            const sala = salas[selectedItem];
+            const id = sala.idSala || sala.id;
+            await salaService.delete(id);
+            const salasResponse = await salaService.getAll();
+            setSalas(salasResponse.data);
+          }
           break;
           
         default:
@@ -213,7 +335,6 @@ function CRUDInt() {
       }
       
       setSelectedItem(null);
-      setError(null); // Limpar mensagens de erro
       
     } catch (err) {
       setError(`Erro ao remover ${selectedType}: ${err.message}`);
@@ -223,70 +344,60 @@ function CRUDInt() {
 
   // Função para selecionar um item
   const handleSelect = (type, index) => {
-  setSelectedItem(index);
-  setSelectedType(type);
+    setSelectedItem(index);
+    setSelectedType(type);
 
-  switch(type) {
-    case "professores":
-      setInput(professores[index].toString());
-      break;
-    case "disciplinas":
-      setInput(disciplinas[index].nomeDisciplina || "");
-      break;
-    case "turmas":
-      const turma = turmas[index];
-      const turmaText = turma.nome || turma.titulo || turma.descricao || turma.id || 'Item sem nome';
-      setInput(turmaText.toString());
-      break;
-    case "salas":
-      const sala = salas[index];
-      const salaText = sala.nome || sala.titulo || sala.descricao || sala.id || 'Item sem nome';
-      setInput(salaText.toString());
-      break;
-    default:
-      break;
-  }
-};
-
+    switch(type) {
+      case "professores":
+        setInput(professores[index].nome || "");
+        break;
+      case "disciplinas":
+        setInput(disciplinas[index].nomeUC || disciplinas[index].NomeUC || "");
+        break;
+      case "turmas":
+        setInput(turmas[index].nome || "");
+        break;
+      case "salas":
+        setInput(salas[index].nome || "");
+        break;
+      default:
+        break;
+    }
+  };
 
   // Função para renderizar uma lista com tratamento de objetos
-const renderList = (items, type) => {
-  return items.map((item, index) => {
-    let displayText = 'Item sem nome';
-    
-    if (typeof item === 'string') {
-      displayText = item;
-    } else {
+  const renderList = (items, type) => {
+    return items.map((item, index) => {
+      let displayText = 'Item sem nome';
+      
       switch (type) {
-        case 'disciplinas':
-          displayText = item.nomeDisciplina || `ID: ${item.idDisciplina}`;
-          break;
         case 'professores':
-          displayText = item.nome || item.id || 'Item sem nome';
+          displayText = item.nome || `ID: ${item.id}`;
+          break;
+        case 'disciplinas':
+          displayText = item.nomeUC || item.NomeUC || `ID: ${item.idUC || item.IdUC}`;
           break;
         case 'turmas':
-          displayText = item.nome || item.id || 'Item sem nome';
+          displayText = item.nome || `ID: ${item.idTurma || item.id}`;
           break;
         case 'salas':
-          displayText = item.nome || item.id || 'Item sem nome';
+          displayText = item.nome || `ID: ${item.idSala || item.id}`;
           break;
         default:
           displayText = item.nome || item.id || 'Item sem nome';
       }
-    }
 
-    return (
-      <li
-        key={index}
-        onClick={() => handleSelect(type, index)}
-        className={selectedItem === index && selectedType === type ? "selected" : ""}
-      >
-        {displayText}
-      </li>
-    );
-  });
-};
-
+      return (
+        <li
+          key={index}
+          onClick={() => handleSelect(type, index)}
+          className={selectedItem === index && selectedType === type ? "selected" : ""}
+        >
+          {displayText}
+        </li>
+      );
+    });
+  };
 
   return (
     <div style={{ padding: "20px" }}>
@@ -294,6 +405,13 @@ const renderList = (items, type) => {
 
       {/* Mensagem de erro */}
       {error && <div className="error-message">{error}</div>}
+      
+      {/* Mensagem se estiver usando dados mock */}
+      {useMockData && (
+        <div className="info-message" style={{ backgroundColor: "#e6f7ff", color: "#0066cc", padding: "6px 8px", borderRadius: "3px", marginBottom: "10px", borderLeft: "3px solid #0066cc", fontSize: "12px" }}>
+          Backend não disponível. Usando dados de demonstração.
+        </div>
+      )}
 
       {/* Botões para selecionar a secção */}
       <div className="category-buttons">
@@ -395,4 +513,4 @@ const renderList = (items, type) => {
   );
 }
 
-export default CRUDInt;
+export default CRUDInt; 
