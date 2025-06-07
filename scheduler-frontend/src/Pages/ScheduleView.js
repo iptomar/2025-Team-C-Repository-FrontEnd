@@ -16,6 +16,7 @@ import connection from "../services/signalrConnection";
 import { formatRange } from "@fullcalendar/core/index.js";
 import { useHistory } from "react-router-dom";
 import { jwtDecode } from "jwt-decode"; // Importar a biblioteca de descodificar as JWTs
+import html2pdf from "html2pdf.js"; // Importar a biblioteca para exportar PDF
 
 const ScheduleView = () => {
   // Novo estado para guardar info do utilizador autenticado
@@ -498,12 +499,26 @@ const ScheduleView = () => {
     setEvents(filtered);
   };
 
+  // Método para exportar o calendário para PDF
+  async function pdf() {
+    html2pdf()
+      .from(document.querySelector(".ScheduleView"))
+      .set({
+        margin: 1,
+        filename: "horario.pdf",
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+      })
+      .save();
+  }
+
   return (
     <div className="container">
       {/* Sidebar só para NÃO docentes */}
       {userRole !== "Docente" && (
         <div className="SideBar">
-          <button
+          <button data-html2canvas-ignore
             style={{
               width: "100%",
               marginBottom: 16,
@@ -522,7 +537,23 @@ const ScheduleView = () => {
           </button>
           <h2>Hierarquia</h2>
 
-          <div className="form-group">
+          <button
+            style={{  
+              width: "100%",
+              marginBottom: 16,
+              background: "#57BB4C",
+              color: "white",
+              fontWeight: "bold",
+              fontSize: "1rem",
+              border: "none",
+              borderRadius: 4,
+              padding: "10px 0",
+              cursor: "pointer",
+            }} 
+            onClick={(pdf)} 
+          ></button>  
+
+          <div className="form-group" data-html2canvas-ignore>
             <label htmlFor="escola">Escola:</label>
             <select
               id="escola"
@@ -542,7 +573,7 @@ const ScheduleView = () => {
             </select>
           </div>
 
-          <div className="form-group">
+          <div className="form-group" data-html2canvas-ignore>
             <label htmlFor="curso">Curso:</label>
             <select
               id="curso"
@@ -564,7 +595,7 @@ const ScheduleView = () => {
           </div>
 
           <h2>Criar Bloco</h2>
-          <div className="form-group">
+          <div className="form-group" data-html2canvas-ignore>
             <label htmlFor="teacher">Professor:</label>
             <select
               id="teacher"
@@ -584,7 +615,7 @@ const ScheduleView = () => {
               )}
             </select>
           </div>
-          <div className="form-group">
+          <div className="form-group" data-html2canvas-ignore>
             <label htmlFor="room">Sala:</label>
             <select
               id="room"
@@ -604,7 +635,7 @@ const ScheduleView = () => {
               )}
             </select>
           </div>
-          <div className="form-group">
+          <div className="form-group" data-html2canvas-ignore>
             <label htmlFor="subject">Disciplina:</label>
             <select
               id="subject"
@@ -626,7 +657,7 @@ const ScheduleView = () => {
           </div>
 
           <h2>Filtros</h2>
-          <div className="form-group">
+          <div className="form-group" data-html2canvas-ignore>
             <label htmlFor="teacherFilter">Docente:</label>
             <select
               id="teacherFilter"
@@ -647,7 +678,7 @@ const ScheduleView = () => {
             </select>
           </div>
 
-          <div className="form-group">
+          <div className="form-group" data-html2canvas-ignore>
             <label htmlFor="roomFilter">Sala:</label>
             <select
               id="roomFilter"
@@ -667,7 +698,7 @@ const ScheduleView = () => {
             </select>
           </div>
 
-          <div className="form-group">
+          <div className="form-group" data-html2canvas-ignore>
             <label htmlFor="classFilter">Turma:</label>
             <select
               id="classFilter"
@@ -687,7 +718,7 @@ const ScheduleView = () => {
             </select>
           </div>
 
-          <div className="blocks-preview">
+          <div className="blocks-preview" data-html2canvas-ignore>
             <h3>Blocos Atuais</h3>
             <p className="instructions">
               Preencha os campos acima e clique no calendário para criar um
