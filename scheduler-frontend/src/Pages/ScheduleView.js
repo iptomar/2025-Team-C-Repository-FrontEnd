@@ -316,7 +316,14 @@ const ScheduleView = () => {
   // 3. Aplica filtros de forma automática / hierarquia
   useEffect(() => {
     applyFilters();
-  }, [teacherFilter, roomFilter, classFilter, allEvents, selectedSchool, selectedDegree]);
+  }, [
+    teacherFilter,
+    roomFilter,
+    classFilter,
+    allEvents,
+    selectedSchool,
+    selectedDegree,
+  ]);
 
   // Método de criação de um bloco horário
   // Este método é chamado quando o utilizador clica em uma data no calendário
@@ -611,7 +618,7 @@ const ScheduleView = () => {
           (subject) => String(subject.cursoFK) === String(selectedDegree)
         )
       );
-      console.log(filteredSubjectList)
+      console.log(filteredSubjectList);
     } else {
       setFilteredSubjectList(subjectList); // Mostra todos se nenhuma escola estiver selecionada
     }
@@ -641,6 +648,73 @@ const ScheduleView = () => {
     setEvents(filtered);
   };
 
+  // Funções que permitem a repetição de semanas:
+  const [visibleRange, setVisibleRange] = useState({ start: null, end: null });
+
+  const handleDatesSet = (arg) => {
+    setVisibleRange({
+      start: arg.start, // Date object
+      end: arg.end, // Date object
+    });
+  };
+
+  const repeatCurrentWeek = async () => {
+    if (!visibleRange.start || !visibleRange.end) {
+      alert("Semana visível não encontrada.");
+      return;
+    }
+    // Só os eventos da semana visível
+    const weekEvents = events.filter((event) => {
+      const eventDate = new Date(event.start);
+      return eventDate >= visibleRange.start && eventDate < visibleRange.end;
+    });
+
+    if (weekEvents.length === 0) {
+      alert("Não há blocos para repetir nesta semana.");
+      return;
+    }
+    setLoading(true);
+    try {
+      for (const event of weekEvents) {
+        const startDate = new Date(event.start);
+        const endDate = new Date(event.end);
+
+        startDate.setDate(startDate.getDate() + 7);
+        endDate.setDate(endDate.getDate() + 7);
+
+        const formatDate = (date) => {
+          const year = date.getFullYear();
+          const month = (date.getMonth() + 1).toString().padStart(2, "0");
+          const day = date.getDate().toString().padStart(2, "0");
+          return `${year}-${month}-${day}`;
+        };
+        const formatTime = (date) => {
+          const hours = date.getHours().toString().padStart(2, "0");
+          const minutes = date.getMinutes().toString().padStart(2, "0");
+          return `${hours}:${minutes}:00`;
+        };
+
+        const novoBloco = {
+          horaInicio: formatTime(startDate),
+          horaFim: formatTime(endDate),
+          dia: formatDate(startDate),
+          professorFK: event.extendedProps.teacherId,
+          unidadeCurricularFK: event.extendedProps.subjectId,
+          salaFK: event.extendedProps.roomId,
+          turmaFK: event.extendedProps.classId || 1,
+        };
+
+        await blocoHorarioService.create(novoBloco);
+      }
+      await fetchBlocos();
+      alert("Blocos da semana visível repetidos para a próxima semana!");
+    } catch (error) {
+      alert("Erro ao repetir blocos.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="container">
       {/* Sidebar só para NÃO docentes */}
@@ -663,6 +737,25 @@ const ScheduleView = () => {
           >
             Upload Data
           </button>
+
+          <button
+            style={{
+              width: "100%",
+              marginBottom: 16,
+              background: "#57BB4C",
+              color: "white",
+              fontWeight: "bold",
+              fontSize: "1rem",
+              border: "none",
+              borderRadius: 4,
+              padding: "10px 0",
+              cursor: "pointer",
+            }}
+            onClick={repeatCurrentWeek}
+            disabled={loading}
+            Repetir Semana Visível
+          </button>
+
           <button
             style={{
               width: "100%",
@@ -886,6 +979,7 @@ const ScheduleView = () => {
           }}
           slotMinTime="08:30:00"
           slotMaxTime="24:00:00"
+          datesSet={handleDatesSet}
           allDaySlot={false}
           events={events}
           editable={true}
