@@ -55,6 +55,10 @@ const ScheduleView = () => {
   const [subjectList, setSubjectList] = useState([]);
 
   const history = useHistory();
+
+  //menu eliminar bloco horário
+  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, eventId: null });
+
   // 1. Carregar role e userId do JWT
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -316,6 +320,19 @@ const ScheduleView = () => {
     applyFilters();
   }, [teacherFilter, roomFilter, classFilter, allEvents, selectedSchool, selectedDegree]);
 
+
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (contextMenu.visible) {
+        setContextMenu({ ...contextMenu, visible: false });
+      }
+    };
+    
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [contextMenu]);
+
+
   // Método de criação de um bloco horário
   // Este método é chamado quando o utilizador clica em uma data no calendário
   const handleDateClick = async (info) => {
@@ -446,6 +463,7 @@ const ScheduleView = () => {
     return `${formatTime(start)} - ${formatTime(end)}`;
   };
 
+
   // Aplica os filtros
   const applyFilters = () => {
     let filtered = allEvents;
@@ -496,6 +514,29 @@ const ScheduleView = () => {
     }
 
     setEvents(filtered);
+  };
+
+  const handleEventClick = (info) => {
+    if (info.jsEvent.button === 0) { // botão esquerdo
+      info.jsEvent.preventDefault();
+      info.jsEvent.stopPropagation();
+      
+      // Posiciona o menu onde o usuário clicou
+      setContextMenu({
+        visible: true,
+        x: info.jsEvent.clientX,
+        y: info.jsEvent.clientY,
+        eventId: info.event.id
+      });
+    }
+  };
+
+  const handleDeleteFromMenu = (e) => {
+    e.stopPropagation();
+    if (contextMenu.eventId && window.confirm("Deseja excluir este bloco horário?")) {
+      handleDeleteEvent(contextMenu.eventId);
+    }
+    setContextMenu({ ...contextMenu, visible: false });
   };
 
   return (
@@ -687,30 +728,7 @@ const ScheduleView = () => {
             </select>
           </div>
 
-          <div className="blocks-preview">
-            <h3>Blocos Atuais</h3>
-            <p className="instructions">
-              Preencha os campos acima e clique no calendário para criar um
-              bloco
-            </p>
-            <div className="events-list">
-              {events.length > 0 ? (
-                events.map((event) => (
-                  <div key={event.id} className="event-item">
-                    <span>{event.title}</span>
-                    <button
-                      className="delete-event-btn"
-                      onClick={() => handleDeleteEvent(event.id)}
-                    >
-                      x
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <p>Nenhum bloco criado ainda</p>
-              )}
-            </div>
-          </div>
+          {/* Seção "Blocos Atuais" removida aqui */}
         </div>
       )}
       <div className="ScheduleView">
@@ -735,6 +753,17 @@ const ScheduleView = () => {
           slotDuration="00:30:00"
           slotLabelInterval="00:30:00"
           slotLabelContent={slotLabelFormatter}
+          hiddenDays={[0]} /* Oculta o domingo (0 = domingo) */
+          eventClick={handleEventClick} /* Adiciona handler para o clique */
+          /* Adiciona um listener para o clique direito (context menu) */
+          eventDidMount={(info) => {
+            info.el.addEventListener('contextmenu', (e) => {
+              e.preventDefault(); // Previne o menu de contexto padrão
+              if (window.confirm("Deseja excluir este bloco horário?")) {
+                handleDeleteEvent(info.event.id);
+              }
+            });
+          }}
           eventContent={(eventInfo) => {
             return (
               <div>
@@ -755,6 +784,19 @@ const ScheduleView = () => {
           }}
         />
       </div>
+      
+      {/* Menu de contexto */}
+      {contextMenu.visible && (
+        <div 
+          className="context-menu" 
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="context-menu-item danger" onClick={handleDeleteFromMenu}>
+            <span>🗑️</span> Eliminar Bloco
+          </div>
+        </div>
+      )}
     </div>
   );
 };

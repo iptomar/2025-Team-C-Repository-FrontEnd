@@ -3,9 +3,10 @@
     justify-content: flex-start;
     align-items: stretch; 
     gap: 20px;
-    height: 100vh; 
+    min-height: 100vh;
     padding: 20px; 
     box-sizing: border-box;
+    overflow: hidden;
 }
 
 .ScheduleView {
@@ -42,7 +43,27 @@
     color: #333;
 }
 
-/* Form group styling */
+.SideBar .form-group select {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  box-sizing: border-box;
+  max-width: 100%;  
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+}
+
+
+.SideBar .form-group select option {
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
 .form-group {
     margin-bottom: 10px;
 }
@@ -208,4 +229,37 @@ body {
 .fc-header-toolbar {
     display: flex;
     align-items: center;
+}
+
+/* ...código existente... */
+
+.context-menu {
+  position: fixed;
+  z-index: 10000;
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 5px 0;
+  min-width: 150px;
+}
+
+.context-menu-item {
+  padding: 6px 15px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.context-menu-item:hover {
+  background-color: #f0f0f0;
+}
+
+.context-menu-item.danger {
+  color: #cc0000;
+}
+
+.context-menu-item.danger:hover {
+  background-color: #ffeeee;
 }
