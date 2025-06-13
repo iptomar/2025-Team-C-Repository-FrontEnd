@@ -4,53 +4,41 @@ import "../Styles/CRUDInt.css";
 // Importar os serviços de API
 import turmaService from "../services/turmaService";
 import salaService from "../services/salaService";
-import ucService from "../services/ucService"; // Para disciplinas
-import api from "../services/api"; // Para requisições diretas se necessário
-
-// Dados mock para quando a API não está disponível
-const mockData = {
-  professores: [
-    { id: 1, nome: "João Silva" },
-    { id: 2, nome: "Maria Oliveira" },
-    { id: 3, nome: "Carlos Santos" }
-  ],
-  disciplinas: [
-    { idUC: 1, nomeUC: "Matemática" },
-    { idUC: 2, nomeUC: "Programação" },
-    { idUC: 3, nomeUC: "Física" }
-  ],
-  turmas: [
-    { idTurma: 1, nome: "Turma A" },
-    { idTurma: 2, nome: "Turma B" },
-    { idTurma: 3, nome: "Turma C" }
-  ],
-  salas: [
-    { idSala: 1, nome: "Sala 101" },
-    { idSala: 2, nome: "Sala 102" },
-    { idSala: 3, nome: "Laboratório 1" }
-  ]
-};
+import escolaService from "../services/escolaService";
+import cursoService from "../services/cursoService";
+import ucService from "../services/ucService"; // Para UCs
+import utilizadorService from "../services/utilizadorService"; // Para professores
+import api from "../services/api";
 
 function CRUDInt() {
+  // Estados para armazenar as escolas e cursos
+  const [escolas, setEscolas] = useState([]);
+  const [cursos, setCursos] = useState([]);
+  const [selectedEscola, setSelectedEscola] = useState("");
+  const [selectedCurso, setSelectedCurso] = useState("");
+
   // Estados para armazenar os dados
   const [professores, setProfessores] = useState([]);
-  const [disciplinas, setDisciplinas] = useState([]);
+  const [UCs, setUCs] = useState([]);
   const [turmas, setTurmas] = useState([]);
   const [salas, setSalas] = useState([]);
-  
+
+  // Estados para filtros de pesquisa
+  const [searchProf, setSearchProf] = useState("");
+  const [searchUC, setSearchUC] = useState("");
+  const [searchTurma, setSearchTurma] = useState("");
+  const [searchSala, setSearchSala] = useState("");
+
   // Estado para controlar carregamento
   const [loading, setLoading] = useState({
     professores: false,
-    disciplinas: false,
+    UCs: false,
     turmas: false,
-    salas: false
+    salas: false,
   });
-  
+
   // Estado para mensagens de erro
   const [error, setError] = useState(null);
-  
-  // Flag para usar dados mock quando a API falha
-  const [useMockData, setUseMockData] = useState(false);
 
   // Estados para os inputs e seleção
   const [input, setInput] = useState("");
@@ -59,230 +47,92 @@ function CRUDInt() {
 
   useEffect(() => {
     fetchData();
+    fetchEscolas();
+    fetchCursos();
   }, []);
+
+  const filterList = (items, type) => {
+    let search = "";
+    switch (type) {
+      case "professores":
+        search = searchProf.toLowerCase();
+        return items.filter((item) =>
+          (item.nome || "").toLowerCase().includes(search)
+        );
+      case "UCs":
+        search = searchUC.toLowerCase();
+        return items.filter((item) =>
+          (item.nomeUC || item.NomeUC || "").toLowerCase().includes(search)
+        );
+      case "turmas":
+        search = searchTurma.toLowerCase();
+        return items.filter((item) =>
+          (item.nome || "").toLowerCase().includes(search)
+        );
+      case "salas":
+        search = searchSala.toLowerCase();
+        return items.filter((item) =>
+          (item.nome || "").toLowerCase().includes(search)
+        );
+      default:
+        return items;
+    }
+  };
 
   // Função para buscar todos os dados da API
   const fetchData = async () => {
     try {
-      // Carregar dados de professores
-      setLoading(prev => ({ ...prev, professores: true }));
-      // Como não temos um endpoint para professores, usamos os dados mock
-      setProfessores(mockData.professores);
-      setLoading(prev => ({ ...prev, professores: false }));
+      setLoading((prev) => ({ ...prev, professores: true }));
+      const professoresResponse = await utilizadorService.getDocentes();
+      setProfessores(professoresResponse.data);
+      setLoading((prev) => ({ ...prev, professores: false }));
 
-      try {
-        // Tentamos carregar disciplinas da API
-        setLoading(prev => ({ ...prev, disciplinas: true }));
-        const disciplinasResponse = await ucService.getAll();
-        setDisciplinas(disciplinasResponse.data);
-        setLoading(prev => ({ ...prev, disciplinas: false }));
-      } catch (err) {
-        console.log("Usando dados mock para disciplinas:", err.message);
-        setDisciplinas(mockData.disciplinas);
-        setLoading(prev => ({ ...prev, disciplinas: false }));
-        setUseMockData(true);
-      }
+      setLoading((prev) => ({ ...prev, UCs: true }));
+      const ucsResponse = await ucService.getAll();
+      setUCs(ucsResponse.data);
+      setLoading((prev) => ({ ...prev, UCs: false }));
 
-      try {
-        // Tentamos carregar turmas da API
-        setLoading(prev => ({ ...prev, turmas: true }));
-        const turmasResponse = await turmaService.getAll();
-        setTurmas(turmasResponse.data);
-        setLoading(prev => ({ ...prev, turmas: false }));
-      } catch (err) {
-        console.log("Usando dados mock para turmas:", err.message);
-        setTurmas(mockData.turmas);
-        setLoading(prev => ({ ...prev, turmas: false }));
-        setUseMockData(true);
-      }
+      setLoading((prev) => ({ ...prev, turmas: true }));
+      const turmasResponse = await turmaService.getAll();
+      setTurmas(turmasResponse.data);
+      setLoading((prev) => ({ ...prev, turmas: false }));
 
-      try {
-        // Tentamos carregar salas da API
-        setLoading(prev => ({ ...prev, salas: true }));
-        const salasResponse = await salaService.getAll();
-        setSalas(salasResponse.data);
-        setLoading(prev => ({ ...prev, salas: false }));
-      } catch (err) {
-        console.log("Usando dados mock para salas:", err.message);
-        setSalas(mockData.salas);
-        setLoading(prev => ({ ...prev, salas: false }));
-        setUseMockData(true);
-      }
+      setLoading((prev) => ({ ...prev, salas: true }));
+      const salasResponse = await salaService.getAll();
+      setSalas(salasResponse.data);
+      setLoading((prev) => ({ ...prev, salas: false }));
 
-      // Se algum carregamento falhou, mostra alerta
-      if (useMockData) {
-        setError("API indisponível. Usando dados mock para demonstração.");
-      } else {
-        setError(null);
-      }
+      setError(null);
     } catch (err) {
       setError("Erro ao carregar dados: " + err.message);
-      console.error("Erro ao carregar dados:", err);
-      
-      // Usar dados mock se a API falhar
-      setProfessores(mockData.professores);
-      setDisciplinas(mockData.disciplinas);
-      setTurmas(mockData.turmas);
-      setSalas(mockData.salas);
-      setUseMockData(true);
-      
       setLoading({
         professores: false,
-        disciplinas: false,
+        UCs: false,
         turmas: false,
-        salas: false
+        salas: false,
       });
     }
   };
 
-  // Função para adicionar ou editar um item
-  const handleAddOrEdit = async () => {
-    if (input.trim() === "") return;
-
+  // Função para buscar escolas e cursos
+  const fetchEscolas = async () => {
     try {
-      if (selectedItem !== null) {
-        // Editar item existente
-        switch (selectedType) {
-          case "professores":
-            // Como não temos API para professores, atualizamos só na memória
-            const updatedProfessores = [...professores];
-            updatedProfessores[selectedItem] = { 
-              ...professores[selectedItem], 
-              nome: input 
-            };
-            setProfessores(updatedProfessores);
-            break;
-            
-          case "disciplinas":
-            if (useMockData) {
-              const updatedDisciplinas = [...disciplinas];
-              updatedDisciplinas[selectedItem] = { 
-                ...disciplinas[selectedItem], 
-                nomeUC: input 
-              };
-              setDisciplinas(updatedDisciplinas);
-            } else {
-              const disciplina = disciplinas[selectedItem];
-              const id = disciplina.idUC || disciplina.IdUC;
-              const updatedDisciplina = { 
-                ...disciplina, 
-                nomeUC: input,
-                NomeUC: input // Para compatibilidade com diferentes propriedades
-              };
-              await ucService.update(id, updatedDisciplina);
-              const disciplinasResponse = await ucService.getAll();
-              setDisciplinas(disciplinasResponse.data);
-            }
-            break;
-            
-          case "turmas":
-            if (useMockData) {
-              const updatedTurmas = [...turmas];
-              updatedTurmas[selectedItem] = { 
-                ...turmas[selectedItem], 
-                nome: input 
-              };
-              setTurmas(updatedTurmas);
-            } else {
-              const turma = turmas[selectedItem];
-              const id = turma.idTurma || turma.id;
-              const updatedTurma = { ...turma, nome: input };
-              await turmaService.update(id, updatedTurma);
-              const turmasResponse = await turmaService.getAll();
-              setTurmas(turmasResponse.data);
-            }
-            break;
-            
-          case "salas":
-            if (useMockData) {
-              const updatedSalas = [...salas];
-              updatedSalas[selectedItem] = { 
-                ...salas[selectedItem], 
-                nome: input 
-              };
-              setSalas(updatedSalas);
-            } else {
-              const sala = salas[selectedItem];
-              const id = sala.idSala || sala.id;
-              const updatedSala = { ...sala, nome: input };
-              await salaService.update(id, updatedSala);
-              const salasResponse = await salaService.getAll();
-              setSalas(salasResponse.data);
-            }
-            break;
-            
-          default:
-            break;
-        }
-      } else {
-        // Adicionar novo item
-        switch (selectedType) {
-          case "professores":
-            const newProfessor = { 
-              id: professores.length + 1, 
-              nome: input 
-            };
-            setProfessores([...professores, newProfessor]);
-            break;
-            
-          case "disciplinas":
-            if (useMockData) {
-              const newDisciplina = { 
-                idUC: disciplinas.length + 1, 
-                nomeUC: input 
-              };
-              setDisciplinas([...disciplinas, newDisciplina]);
-            } else {
-              const newDisciplina = { nome: input };
-              await ucService.create(newDisciplina);
-              const disciplinasResponse = await ucService.getAll();
-              setDisciplinas(disciplinasResponse.data);
-            }
-            break;
-            
-          case "turmas":
-            if (useMockData) {
-              const newTurma = { 
-                idTurma: turmas.length + 1, 
-                nome: input 
-              };
-              setTurmas([...turmas, newTurma]);
-            } else {
-              const newTurma = { nome: input };
-              await turmaService.create(newTurma);
-              const turmasResponse = await turmaService.getAll();
-              setTurmas(turmasResponse.data);
-            }
-            break;
-            
-          case "salas":
-            if (useMockData) {
-              const newSala = { 
-                idSala: salas.length + 1, 
-                nome: input 
-              };
-              setSalas([...salas, newSala]);
-            } else {
-              const newSala = { nome: input };
-              await salaService.create(newSala);
-              const salasResponse = await salaService.getAll();
-              setSalas(salasResponse.data);
-            }
-            break;
-            
-          default:
-            break;
-        }
-      }
-      
-      setInput(""); // Limpar o campo de input
-      setSelectedItem(null); // Limpar seleção
-      
+      const response = await escolaService.getAll();
+      setEscolas(response.data);
     } catch (err) {
-      setError(`Erro ao ${selectedItem !== null ? 'editar' : 'adicionar'} ${selectedType}: ${err.message}`);
-      console.error("Erro na operação:", err);
+      setError("Erro ao carregar escolas: " + err.message);
     }
   };
+
+  const fetchCursos = async () => {
+    try {
+      const response = await cursoService.getAll();
+      setCursos(response.data);
+    } catch (err) {
+      setError("Erro ao carregar cursos: " + err.message);
+    }
+  };
+  // -----
 
   // Função para remover um item
   const handleRemove = async () => {
@@ -291,53 +141,45 @@ function CRUDInt() {
     try {
       switch (selectedType) {
         case "professores":
-          setProfessores(professores.filter((_, i) => i !== selectedItem));
+          setError("Remoção de professores não suportada.");
           break;
-          
-        case "disciplinas":
-          if (useMockData) {
-            setDisciplinas(disciplinas.filter((_, i) => i !== selectedItem));
-          } else {
-            const disciplina = disciplinas[selectedItem];
-            const id = disciplina.idUC || disciplina.IdUC;
-            await ucService.delete(id);
-            const disciplinasResponse = await ucService.getAll();
-            setDisciplinas(disciplinasResponse.data);
-          }
+
+        case "UCs":
+          const disciplina = UCs[selectedItem];
+          const idDisc = disciplina.idUC || disciplina.IdUC;
+          await ucService.delete(idDisc);
+          const ucsResponse = await ucService.getAll();
+          setUCs(ucsResponse.data);
           break;
-          
+
         case "turmas":
-          if (useMockData) {
-            setTurmas(turmas.filter((_, i) => i !== selectedItem));
-          } else {
-            const turma = turmas[selectedItem];
-            const id = turma.idTurma || turma.id;
-            await turmaService.delete(id);
-            const turmasResponse = await turmaService.getAll();
-            setTurmas(turmasResponse.data);
-          }
+          const turma = turmas[selectedItem];
+          const idTurma = turma.idTurma || turma.id;
+          await turmaService.delete(idTurma);
+          const turmasResponse = await turmaService.getAll();
+          setTurmas(turmasResponse.data);
           break;
-          
+
         case "salas":
-          if (useMockData) {
-            setSalas(salas.filter((_, i) => i !== selectedItem));
-          } else {
-            const sala = salas[selectedItem];
-            const id = sala.idSala || sala.id;
-            await salaService.delete(id);
-            const salasResponse = await salaService.getAll();
-            setSalas(salasResponse.data);
-          }
+          const sala = salas[selectedItem];
+          const idSala = sala.idSala || sala.id;
+          await salaService.delete(idSala);
+          const salasResponse = await salaService.getAll();
+          setSalas(salasResponse.data);
           break;
-          
+
         default:
           break;
       }
-      
+
       setSelectedItem(null);
-      
     } catch (err) {
-      setError(`Erro ao remover ${selectedType}: ${err.message}`);
+      // Verifica se a resposta contém uma mensagem de erro específica
+      const apiMessage =
+        err.response && err.response.data && err.response.data.message
+          ? err.response.data.message
+          : err.message;
+      setError(`Erro ao remover ${selectedType}: ${apiMessage}`);
       console.error("Erro ao remover:", err);
     }
   };
@@ -347,12 +189,12 @@ function CRUDInt() {
     setSelectedItem(index);
     setSelectedType(type);
 
-    switch(type) {
+    switch (type) {
       case "professores":
         setInput(professores[index].nome || "");
         break;
-      case "disciplinas":
-        setInput(disciplinas[index].nomeUC || disciplinas[index].NomeUC || "");
+      case "UCs":
+        setInput(UCs[index].nomeUC || UCs[index].NomeUC || "");
         break;
       case "turmas":
         setInput(turmas[index].nome || "");
@@ -368,30 +210,33 @@ function CRUDInt() {
   // Função para renderizar uma lista com tratamento de objetos
   const renderList = (items, type) => {
     return items.map((item, index) => {
-      let displayText = 'Item sem nome';
-      
+      let displayText = "Item sem nome";
+
       switch (type) {
-        case 'professores':
+        case "professores":
           displayText = item.nome || `ID: ${item.id}`;
           break;
-        case 'disciplinas':
-          displayText = item.nomeUC || item.NomeUC || `ID: ${item.idUC || item.IdUC}`;
+        case "UCs":
+          displayText =
+            item.nomeUC || item.NomeUC || `ID: ${item.idUC || item.IdUC}`;
           break;
-        case 'turmas':
+        case "turmas":
           displayText = item.nome || `ID: ${item.idTurma || item.id}`;
           break;
-        case 'salas':
+        case "salas":
           displayText = item.nome || `ID: ${item.idSala || item.id}`;
           break;
         default:
-          displayText = item.nome || item.id || 'Item sem nome';
+          displayText = item.nome || item.id || "Item sem nome";
       }
 
       return (
         <li
           key={index}
           onClick={() => handleSelect(type, index)}
-          className={selectedItem === index && selectedType === type ? "selected" : ""}
+          className={
+            selectedItem === index && selectedType === type ? "selected" : ""
+          }
         >
           {displayText}
         </li>
@@ -399,63 +244,75 @@ function CRUDInt() {
     });
   };
 
+  // Filtrar cursos pela escola selecionada
+  const filteredCursos = selectedEscola
+    ? cursos.filter(
+        (curso) => String(curso.escolaFK) === String(selectedEscola)
+      )
+    : cursos;
+
+  // Filtrar UCs pelo curso selecionado
+  const filteredUCs = selectedCurso
+    ? UCs.filter(
+        (uc) => String(uc.cursoFK ?? uc.CursoFK) === String(selectedCurso)
+      )
+    : UCs;
+
+  // Filtrar turmas pelo curso selecionado
+  const filteredTurmas = selectedCurso
+    ? turmas.filter(
+        (turma) =>
+          String(turma.cursoFK ?? turma.CursoFK) === String(selectedCurso)
+      )
+    : turmas;
+
   return (
     <div className="crud-int-container">
-      <h1>Gestão de Professores, Disciplinas, Turmas e Salas</h1>
+      <h1>Gestão de Professores, Unidades Curriculares, Turmas e Salas</h1>
 
       {/* Mensagem de erro */}
       {error && <div className="error-message">{error}</div>}
-      
-      {/* Mensagem se estiver usando dados mock */}
-      {useMockData && (
-        <div className="info-message">
-          Backend não disponível. A usar dados de demonstração.
-        </div>
-      )}
 
-      {/* Botões para selecionar a secção */}
-      <div className="category-buttons">
-        <button 
-          className={`category-button ${selectedType === "professores" ? "selected" : ""}`}
-          onClick={() => setSelectedType("professores")}
+      {/* Filtros de Escola e Curso */}
+      <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+        <select
+          value={selectedEscola}
+          onChange={(e) => {
+            setSelectedEscola(e.target.value);
+            setSelectedCurso(""); // Limpa curso ao trocar escola
+          }}
         >
-          Professores
-        </button>
-        <button 
-          className={`category-button ${selectedType === "disciplinas" ? "selected" : ""}`}
-          onClick={() => setSelectedType("disciplinas")}
+          <option value="">Filtrar por Escola</option>
+          {escolas.map((escola) => (
+            <option key={escola.idEscola} value={escola.idEscola}>
+              {escola.nome}
+            </option>
+          ))}
+        </select>
+        <select
+          value={selectedCurso}
+          onChange={(e) => setSelectedCurso(e.target.value)}
+          disabled={!selectedEscola}
         >
-          Disciplinas
-        </button>
-        <button 
-          className={`category-button ${selectedType === "turmas" ? "selected" : ""}`}
-          onClick={() => setSelectedType("turmas")}
-        >
-          Turmas
-        </button>
-        <button 
-          className={`category-button ${selectedType === "salas" ? "selected" : ""}`}
-          onClick={() => setSelectedType("salas")}
-        >
-          Salas
-        </button>
+          <option value="">Filtrar por Curso</option>
+          {filteredCursos.map((curso) => (
+            <option key={curso.idCurso} value={curso.idCurso}>
+              {curso.nome}
+            </option>
+          ))}
+        </select>
       </div>
-
-      {/* Campo de input */}
-      <input
-        type="text"
-        placeholder="Adicionar ou editar item"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        style={{ marginRight: "10px", padding: "5px" }}
-      />
 
       {/* Botões globais */}
       <div className="action-buttons-container">
-        <button className="action-button" onClick={handleAddOrEdit}>
+        <button className="action-button">
           {selectedItem !== null ? "Editar" : "Adicionar"}
         </button>
-        <button className="action-button" onClick={handleRemove} disabled={selectedItem === null}>
+        <button
+          className="action-button"
+          onClick={handleRemove}
+          disabled={selectedItem === null}
+        >
           Remover
         </button>
         <button className="action-button" onClick={fetchData}>
@@ -466,44 +323,72 @@ function CRUDInt() {
       {/* Listas de itens com indicadores de carregamento */}
       <div style={{ marginTop: "20px" }}>
         <h2>Professores</h2>
+        <input
+          type="text"
+          placeholder="Pesquisar professor"
+          value={searchProf}
+          onChange={(e) => setSearchProf(e.target.value)}
+          style={{ marginBottom: "8px", padding: "4px", width: "100%" }}
+        />
         <ul className="scrollable-list">
           {loading.professores ? (
             <li>Carregando professores...</li>
           ) : professores.length > 0 ? (
-            renderList(professores, "professores")
+            renderList(filterList(professores, "professores"))
           ) : (
             <li>Nenhum professor cadastrado</li>
           )}
         </ul>
 
-        <h2>Disciplinas</h2>
+        <h2>UCs</h2>
+        <input
+          type="text"
+          placeholder="Pesquisar UC"
+          value={searchUC}
+          onChange={(e) => setSearchUC(e.target.value)}
+          style={{ marginBottom: "8px", padding: "4px", width: "100%" }}
+        />
         <ul className="scrollable-list">
-          {loading.disciplinas ? (
-            <li>Carregando disciplinas...</li>
-          ) : disciplinas.length > 0 ? (
-            renderList(disciplinas, "disciplinas")
+          {loading.UCs ? (
+            <li>Carregando UCs...</li>
+          ) : UCs.length > 0 ? (
+            renderList(filterList(filteredUCs, "UCs"), "UCs")
           ) : (
             <li>Nenhuma disciplina cadastrada</li>
           )}
         </ul>
 
         <h2>Turmas</h2>
+        <input
+          type="text"
+          placeholder="Pesquisar turma"
+          value={searchTurma}
+          onChange={(e) => setSearchTurma(e.target.value)}
+          style={{ marginBottom: "8px", padding: "4px", width: "100%" }}
+        />
         <ul className="scrollable-list">
           {loading.turmas ? (
             <li>Carregando turmas...</li>
           ) : turmas.length > 0 ? (
-            renderList(turmas, "turmas")
+            renderList(filterList(filteredTurmas, "turmas"), "turmas")
           ) : (
             <li>Nenhuma turma cadastrada</li>
           )}
         </ul>
 
         <h2>Salas</h2>
+        <input
+          type="text"
+          placeholder="Pesquisar sala"
+          value={searchSala}
+          onChange={(e) => setSearchSala(e.target.value)}
+          style={{ marginBottom: "8px", padding: "4px", width: "100%" }}
+        />
         <ul className="scrollable-list">
           {loading.salas ? (
             <li>Carregando salas...</li>
           ) : salas.length > 0 ? (
-            renderList(salas, "salas")
+            renderList(filterList(salas, "salas"), "salas")
           ) : (
             <li>Nenhuma sala cadastrada</li>
           )}
@@ -513,4 +398,4 @@ function CRUDInt() {
   );
 }
 
-export default CRUDInt; 
+export default CRUDInt;
