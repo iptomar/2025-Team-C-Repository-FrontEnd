@@ -753,6 +753,7 @@ const ScheduleView = () => {
             }}
             onClick={repeatCurrentWeek}
             disabled={loading}
+          >
             Repetir Semana Visível
           </button>
 
