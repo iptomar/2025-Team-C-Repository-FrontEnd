@@ -2,11 +2,13 @@ import React, { use, useEffect, useState } from "react";
 import "../Styles/Login.css";
 import { loginUser } from "../services/authService";
 import logo from '../Assets/logoipt.png';
+import Popup from '../Components/Popup'; // Importa o Popup
 
 function Login() {
   // Definir estados para email e password
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [popup, setPopup] = useState({ open: false, message: "" }); // Estado do popup
 
   useEffect(() => {
     // Verificar se o utilizador já está autenticado
@@ -15,18 +17,19 @@ function Login() {
       // Se já estiver autenticado, redirecionar para a página de criação de horários
       window.location.href = "/schedule";
     }
-  });
+  }, []);
 
   // Função para fazer login
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
       const token = await loginUser(email, password);
-      alert('Login efetuado com sucesso!');
-      // Redirecionar para a página da criação de horários
-      window.location.href = "/schedule";
+      setPopup({ open: true, message: "Login efetuado com sucesso!" });
+      setTimeout(() => {
+        window.location.href = "/schedule";
+      }, 1200); // Aguarda popup antes de redirecionar
     } catch (error) {
-      alert(`Erro: ${error.message}`);
+      setPopup({ open: true, message: `Erro: ${error.message}` });
     }
   };
 
@@ -52,6 +55,11 @@ function Login() {
           />
           <button className="login-button" type="submit">Entrar</button>
         </form>
+        <Popup
+          open={popup.open}
+          message={popup.message}
+          onClose={() => setPopup({ ...popup, open: false })}
+        />
       </div>
     </div>
   );
