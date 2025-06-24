@@ -652,12 +652,18 @@ const ScheduleView = () => {
   // Funções que permitem a repetição de semanas:
   const [visibleRange, setVisibleRange] = useState({ start: null, end: null });
 
-  const handleDatesSet = (arg) => {
+  // Modify the handleDatesSet function to avoid infinite loop
+const handleDatesSet = (arg) => {
+  // Only update state if the range has actually changed
+  if (!visibleRange.start || !visibleRange.end ||
+      visibleRange.start.getTime() !== arg.start.getTime() ||
+      visibleRange.end.getTime() !== arg.end.getTime()) {
     setVisibleRange({
-      start: arg.start, // Date object
-      end: arg.end, // Date object
+      start: arg.start,
+      end: arg.end,
     });
-  };
+  }
+};
 
   const repeatCurrentWeek = async () => {
     if (!visibleRange.start || !visibleRange.end) {
