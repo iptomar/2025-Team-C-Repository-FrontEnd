@@ -57,6 +57,7 @@ const ScheduleView = () => {
   const [subjectList, setSubjectList] = useState([]);
 
   const history = useHistory();
+
   // 1. Carregar role e userId do JWT
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -940,31 +941,6 @@ const ScheduleView = () => {
               )}
             </select>
           </div>
-
-          <div className="blocks-preview">
-            <h3>Blocos Atuais</h3>
-            <p className="instructions">
-              Preencha os campos acima e clique no calendário para criar um
-              bloco
-            </p>
-            <div className="events-list">
-              {events.length > 0 ? (
-                events.map((event) => (
-                  <div key={event.id} className="event-item">
-                    <span>{event.title}</span>
-                    <button
-                      className="delete-event-btn"
-                      onClick={() => handleDeleteEvent(event.id)}
-                    >
-                      x
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <p>Nenhum bloco criado ainda</p>
-              )}
-            </div>
-          </div>
         </div>
       )}
       <div className="ScheduleView">
@@ -990,6 +966,16 @@ const ScheduleView = () => {
           slotDuration="00:30:00"
           slotLabelInterval="00:30:00"
           slotLabelContent={slotLabelFormatter}
+          hiddenDays={[0]} /* Oculta o domingo (0 = domingo) */
+          /* Adiciona um listener para o clique direito (context menu) */
+          eventDidMount={(info) => {
+            info.el.addEventListener('contextmenu', (e) => {
+              e.preventDefault(); // Previne o menu de contexto padrão
+              if (window.confirm("Deseja excluir este bloco horário?")) {
+                handleDeleteEvent(info.event.id);
+              }
+            });
+          }}
           eventContent={(eventInfo) => {
             return (
               <div>

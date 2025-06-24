@@ -31,24 +31,28 @@ function Login() {
   };
 
   return (
-    <div className="login-container">
-      <form onSubmit={handleLogin}>
-      <img src={logo} alt="Logotipo" className="login-logo" />
-        <h2>Iniciar Sessão</h2>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Palavra-passe"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button type="submit">Entrar</button>
-      </form>
+    <div className="login-page">
+      <div className="login-container">
+        <form className="login-form" onSubmit={handleLogin}>
+          <img src={logo} alt="Logotipo" className="login-logo" />
+          <h2>Iniciar Sessão</h2>
+          <input
+            className="login-input"
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <input
+            className="login-input"
+            type="password"
+            placeholder="Palavra-passe"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button className="login-button" type="submit">Entrar</button>
+        </form>
+      </div>
     </div>
   );
 }
