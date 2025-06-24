@@ -1,0 +1,180 @@
+import React, { useState, useEffect } from "react";
+import turmaService from "../services/turmaService";
+import ucService from "../services/ucService";
+import cursoService from "../services/cursoService";
+
+function Add() {
+  const [escolha, setEscolha] = useState(""); // turma ou uc
+  const [nome, setNome] = useState(""); // nome da turma ou UC
+  const [mensagem, setMensagem] = useState("");
+  const [cursos, setCursos] = useState([]); // lista de cursos
+  const [cursoFK, setCursoFK] = useState(""); // id do curso selecionado
+
+  // Campos UC
+  const [tipoUC, setTipoUC] = useState("");
+  const [grauAcademico, setGrauAcademico] = useState("");
+  const [tipologia, setTipologia] = useState("");
+  const [semestre, setSemestre] = useState("");
+  const [ano, setAno] = useState("");
+
+  // Buscar cursos ao montar
+  useEffect(() => {
+    if (escolha === "turma" || escolha === "uc") {
+      cursoService.getAll().then(res => setCursos(res.data)).catch(() => setCursos([]));
+    }
+  }, [escolha]);
+
+  // Submeter formulário
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (escolha === "turma") {
+        if (!cursoFK) {
+          setMensagem("Selecione um curso.");
+          return;
+        }
+        await turmaService.create({ nome, cursoFK: parseInt(cursoFK, 10) });
+        setMensagem("Turma adicionada com sucesso!");
+        setNome("");
+        setCursoFK("");
+      } else if (escolha === "uc") {
+        if (!cursoFK || !nome || !tipoUC || !grauAcademico || !semestre) {
+          setMensagem("Preencha todos os campos obrigatórios.");
+          return;
+        }
+        await ucService.create({
+          nomeUC: nome,
+          tipoUC,
+          grauAcademico,
+          tipologia,
+          semestre,
+          ano: ano ? parseInt(ano, 10) : null,
+          cursoFK: parseInt(cursoFK, 10),
+        });
+        setMensagem("UC adicionada com sucesso!");
+        setNome("");
+        setTipoUC("");
+        setGrauAcademico("");
+        setTipologia("");
+        setSemestre("");
+        setAno("");
+        setCursoFK("");
+      }
+    } catch (error) {
+      setMensagem("Erro ao adicionar.");
+    }
+  };
+
+  // Formulário dinâmico
+  const renderFormulario = () => {
+    if (escolha === "turma") {
+      return (
+        <form style={{ marginTop: 24 }} onSubmit={handleSubmit}>
+          <h3>Adicionar Turma</h3>
+          <input
+            type="text"
+            placeholder="Nome da Turma"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            required
+          />
+          <select
+            value={cursoFK}
+            onChange={e => setCursoFK(e.target.value)}
+            required
+            style={{ marginLeft: 8 }}
+          >
+            <option value="">Selecione o curso</option>
+            {cursos.map(curso => (
+              <option key={curso.id || curso.Id || curso.idCurso} value={curso.id || curso.Id || curso.idCurso}>
+                {curso.nome || curso.Nome}
+              </option>
+            ))}
+          </select>
+          <button type="submit" style={{ marginLeft: 8 }}>Guardar</button>
+        </form>
+      );
+    }
+    if (escolha === "uc") {
+      return (
+        <form style={{ marginTop: 24 }} onSubmit={handleSubmit}>
+          <h3>Adicionar UC</h3>
+          <input
+            type="text"
+            placeholder="Nome da UC"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            required
+          />
+          <input
+            type="text"
+            placeholder="Tipo UC"
+            value={tipoUC}
+            onChange={(e) => setTipoUC(e.target.value)}
+            required
+            style={{ marginLeft: 8 }}
+          />
+          <input
+            type="text"
+            placeholder="Grau Académico"
+            value={grauAcademico}
+            onChange={(e) => setGrauAcademico(e.target.value)}
+            required
+            style={{ marginLeft: 8 }}
+          />
+          <input
+            type="text"
+            placeholder="Tipologia"
+            value={tipologia}
+            onChange={(e) => setTipologia(e.target.value)}
+            style={{ marginLeft: 8 }}
+          />
+          <input
+            type="text"
+            placeholder="Semestre"
+            value={semestre}
+            onChange={(e) => setSemestre(e.target.value)}
+            required
+            style={{ marginLeft: 8 }}
+          />
+          <input
+            type="number"
+            placeholder="Ano"
+            value={ano}
+            onChange={(e) => setAno(e.target.value)}
+            style={{ marginLeft: 8, width: 70 }}
+          />
+          <select
+            value={cursoFK}
+            onChange={e => setCursoFK(e.target.value)}
+            required
+            style={{ marginLeft: 8 }}
+          >
+            <option value="">Selecione o curso</option>
+            {cursos.map(curso => (
+              <option key={curso.id || curso.Id || curso.idCurso} value={curso.id || curso.Id || curso.idCurso}>
+                {curso.nome || curso.Nome}
+              </option>
+            ))}
+          </select>
+          <button type="submit" style={{ marginLeft: 8 }}>Guardar</button>
+        </form>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <div style={{ padding: 32 }}>
+      <h2>O que deseja adicionar?</h2>
+      <button onClick={() => { setEscolha("turma"); setMensagem(""); }}>Adicionar Turma</button>
+      <button onClick={() => { setEscolha("uc"); setMensagem(""); }} style={{ marginLeft: 16 }}>
+        Adicionar UC
+      </button>
+      {renderFormulario()}
+      {mensagem && <p style={{ marginTop: 16 }}>{mensagem}</p>}
+    </div>
+  );
+}
+
+export default Add;
