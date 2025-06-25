@@ -336,9 +336,11 @@ const ScheduleView = () => {
 
   // Método de criação de um bloco horário
   // Este método é chamado quando o utilizador clica em uma data no calendário
-  const handleDateClick = async (info) => {
-    // aceitar criação de blocos apenas se todos os campos estiverem preenchidos
-    if (teacher && room && subject) {
+  // Método de criação de um bloco horário
+const handleDateClick = async (info) => {
+  // aceitar criação de blocos apenas se todos os campos estiverem preenchidos
+  if (teacher && room && subject) {
+    try {
       // criar um horário de início corretamente alinhado a partir da data clicada
       const clickTime = new Date(info.dateStr);
 
@@ -373,15 +375,28 @@ const ScheduleView = () => {
       };
 
       // Enviar requisição POST para a API
-      const response = await blocoHorarioService.create(novoBloco);
-      if (!(response.status === 201 || response.status === 200)) {
-        setPopup({ open: true, message: "Erro ao criar bloco horário." });
-        return;
+      await blocoHorarioService.create(novoBloco);
+      
+    } catch (error) {
+      // Verificar o tipo de erro e mostrar mensagem apropriada
+      let errorMessage = "Erro ao criar bloco horário.";
+      
+      if (error.response) {
+        if (error.response.status === 400) {
+          errorMessage = "Conflito de horário: Este professor já tem aula marcada neste horário ou está no horário de refeição.";
+        } else if (error.response.data) {
+          // Se a API retornou uma mensagem específica
+          errorMessage = `Erro: ${error.response.data}`;
+        }
       }
-    } else {
-      setPopup({ open: true, message: "Por favor, preencha selecione todos os campos." });
+      
+      setPopup({ open: true, message: errorMessage });
+      return;
     }
-  };
+  } else {
+    setPopup({ open: true, message: "Por favor, preencha todos os campos." });
+  }
+};
 
   // Método para lidar com o arrastar/redimensionar de um bloco
   const handleEventEdit = async (info) => {
@@ -420,19 +435,31 @@ const ScheduleView = () => {
     };
 
     // Enviar requisição PUT para a API
-    try {
-      const response = await blocoHorarioService.update(
-        eventId,
-        blocoAtualizado
-      );
-      if (!(response.status === 200 || response.status === 204)) {
-        setPopup({ open: true, message: "Erro ao atualizar bloco na API." });
-        info.revert();
-      }
-    } catch (error) {
-      setPopup({ open: true, message: "Erro ao atualizar bloco na API." });
-      info.revert();
+try {
+  const response = await blocoHorarioService.update(
+    eventId,
+    blocoAtualizado
+  );
+  if (!(response.status === 200 || response.status === 204)) {
+    setPopup({ open: true, message: "Erro ao atualizar bloco na API." });
+    info.revert();
+  }
+} catch (error) {
+  // Verificar o tipo de erro e mostrar mensagem apropriada
+  let errorMessage = "Erro ao atualizar bloco horário.";
+  
+  if (error.response) {
+    if (error.response.status === 400) {
+      errorMessage = "Conflito de horário: Este professor já tem aula marcada neste horário ou está no horário de refeição.";
+    } else if (error.response.data) {
+      // Se a API retornou uma mensagem específica
+      errorMessage = `Erro: ${error.response.data}`;
     }
+  }
+  
+  setPopup({ open: true, message: errorMessage });
+  info.revert();
+}
   };
 
   // Método para lidar com a exclusão de um bloco
