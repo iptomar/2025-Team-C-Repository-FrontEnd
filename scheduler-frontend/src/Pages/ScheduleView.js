@@ -816,10 +816,9 @@ const handleDatesSet = (arg) => {
 
   return (
     <div className="container">
-      {/* Sidebar só para NÃO docentes */}
       {userRole !== "Docente" && (
         <div className="SideBar">
-          <button
+          {/*<button
             style={{
               width: "100%",
               marginBottom: 16,
@@ -835,7 +834,7 @@ const handleDatesSet = (arg) => {
             onClick={() => history.push("/upload-data")}
           >
             Upload Data
-          </button>
+          </button> */}
 
           <button
             style={{
