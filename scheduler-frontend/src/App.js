@@ -7,6 +7,7 @@ import ScheduleView from "./Pages/ScheduleView";
 import Home from './Pages/Home';
 import UploadData from './Pages/UploadData';
 import Navbar from './Pages/NavBar';
+import Add from './Pages/Add'; // Página de adicionar dados
 
 const AppContent = () => {
   const location = useLocation();
@@ -21,6 +22,7 @@ const AppContent = () => {
         <Route path="/schedule" component={ScheduleView} />
         <Route path="/upload-data" component={UploadData} />
         <Route path="/crud" component={CRUDInt} />
+        <Route path="/add" component={Add} />
         <Route path="/" exact component={Home} />
       </Switch>
     </>
