@@ -1,5 +1,5 @@
 .upload-container {
-  padding-top: 50px; /* Adiciona espaço para compensar o header fixo */
+  padding-top: 70px;
 }
 
 .upload-header-row {
@@ -109,11 +109,16 @@
 .sheet-tabs {
   display: flex;
   gap: 8px;
-  margin: 8px 0 0 0; /* Reduced top margin, removed bottom margin */
+  margin: 20px auto 0;
+  padding-top: 10px;
+  position: relative;
+  z-index: 10;
+  justify-content: center;
+  width: 100%;
 }
 
 .sheet-tab {
-  padding: 4px 12px;
+  padding: 6px 16px;
   font-size: 0.95rem;
   border: 1px solid #ccc;
   background: #f7f7f7;
@@ -128,6 +133,7 @@
   background: #e0e0e0;
   border-bottom: 2px solid #1976d2;
   font-weight: bold;
+  box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
 }
 
 .sheet-tab:not(.active):hover {
