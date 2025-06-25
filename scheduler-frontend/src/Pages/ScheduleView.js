@@ -47,7 +47,8 @@ const ScheduleView = () => {
   // Lista - Dropdowns
 
   
-  
+  //Evento a ser eliminado
+const [deleteConfirm, setDeleteConfirm] = useState({ open: false, eventId: null });
   
   // Popup para mensagens de erro
   const [popup, setPopup] = useState({ open: false, message: "" });
@@ -336,9 +337,11 @@ const ScheduleView = () => {
 
   // Método de criação de um bloco horário
   // Este método é chamado quando o utilizador clica em uma data no calendário
-  const handleDateClick = async (info) => {
-    // aceitar criação de blocos apenas se todos os campos estiverem preenchidos
-    if (teacher && room && subject) {
+  // Método de criação de um bloco horário
+const handleDateClick = async (info) => {
+  // aceitar criação de blocos apenas se todos os campos estiverem preenchidos
+  if (teacher && room && subject) {
+    try {
       // criar um horário de início corretamente alinhado a partir da data clicada
       const clickTime = new Date(info.dateStr);
 
@@ -373,15 +376,28 @@ const ScheduleView = () => {
       };
 
       // Enviar requisição POST para a API
-      const response = await blocoHorarioService.create(novoBloco);
-      if (!(response.status === 201 || response.status === 200)) {
-        setPopup({ open: true, message: "Erro ao criar bloco horário." });
-        return;
+      await blocoHorarioService.create(novoBloco);
+      
+    } catch (error) {
+      // Verificar o tipo de erro e mostrar mensagem apropriada
+      let errorMessage = "Erro ao criar bloco horário.";
+      
+      if (error.response) {
+        if (error.response.status === 400) {
+          errorMessage = "Conflito de horário: Este professor já tem aula marcada neste horário ou está no horário de refeição.";
+        } else if (error.response.data) {
+          // Se a API retornou uma mensagem específica
+          errorMessage = `Erro: ${error.response.data}`;
+        }
       }
-    } else {
-      setPopup({ open: true, message: "Por favor, preencha selecione todos os campos." });
+      
+      setPopup({ open: true, message: errorMessage });
+      return;
     }
-  };
+  } else {
+    setPopup({ open: true, message: "Por favor, preencha todos os campos." });
+  }
+};
 
   // Método para lidar com o arrastar/redimensionar de um bloco
   const handleEventEdit = async (info) => {
@@ -420,34 +436,55 @@ const ScheduleView = () => {
     };
 
     // Enviar requisição PUT para a API
-    try {
-      const response = await blocoHorarioService.update(
-        eventId,
-        blocoAtualizado
-      );
-      if (!(response.status === 200 || response.status === 204)) {
-        setPopup({ open: true, message: "Erro ao atualizar bloco na API." });
-        info.revert();
-      }
-    } catch (error) {
-      setPopup({ open: true, message: "Erro ao atualizar bloco na API." });
-      info.revert();
+try {
+  const response = await blocoHorarioService.update(
+    eventId,
+    blocoAtualizado
+  );
+  if (!(response.status === 200 || response.status === 204)) {
+    setPopup({ open: true, message: "Erro ao atualizar bloco na API." });
+    info.revert();
+  }
+} catch (error) {
+  // Verificar o tipo de erro e mostrar mensagem apropriada
+  let errorMessage = "Erro ao atualizar bloco horário.";
+  
+  if (error.response) {
+    if (error.response.status === 400) {
+      errorMessage = "Conflito de horário: Este professor já tem aula marcada neste horário ou está no horário de refeição.";
+    } else if (error.response.data) {
+      // Se a API retornou uma mensagem específica
+      errorMessage = `Erro: ${error.response.data}`;
     }
+  }
+  
+  setPopup({ open: true, message: errorMessage });
+  info.revert();
+}
   };
 
   // Método para lidar com a exclusão de um bloco
   const handleDeleteEvent = async (eventId) => {
-    try {
-      // Apagar o bloco
-      const response = await blocoHorarioService.delete(eventId);
-      // Tratar o estado da resposta
-      if (!(response.status === 200 || response.status === 204)) {
-        setPopup({ open: true, message: "Erro ao excluir bloco." });
-      }
-    } catch (error) {
+  try {
+    // Apagar o bloco
+    const response = await blocoHorarioService.delete(eventId);
+    // Tratar o estado da resposta
+    if (!(response.status === 200 || response.status === 204)) {
       setPopup({ open: true, message: "Erro ao excluir bloco." });
+    } else {
+      // Mensagem de sucesso
+      setPopup({ open: true, message: "Bloco excluído com sucesso!" });
     }
-  };
+  } catch (error) {
+    let errorMessage = "Erro ao excluir bloco.";
+    
+    if (error.response && error.response.data) {
+      errorMessage = `Erro: ${error.response.data}`;
+    }
+    
+    setPopup({ open: true, message: errorMessage });
+  }
+};
 
   // Método para formatar o rótulo do slot
   const slotLabelFormatter = (slotInfo) => {
@@ -730,6 +767,53 @@ const handleDatesSet = (arg) => {
     }
   };
 
+  // Componente DeleteConfirmPopup para confirmação de exclusão
+  const DeleteConfirmPopup = () => {
+    if (!deleteConfirm.open) return null;
+    
+    return (
+      <div className="popup-overlay">
+        <div className="popup-content">
+          <h3>Confirmar Exclusão</h3>
+          <p>Tem certeza que deseja excluir este bloco?</p>
+          <div className="popup-buttons">
+            <button 
+              onClick={() => {
+                handleDeleteEvent(deleteConfirm.eventId);
+                setDeleteConfirm({ open: false, eventId: null });
+              }}
+              style={{
+                background: "#d32f2f",
+                color: "white",
+                border: "none",
+                padding: "8px 16px",
+                margin: "0 8px",
+                borderRadius: "4px",
+                cursor: "pointer"
+              }}
+            >
+              Excluir
+            </button>
+            <button
+              onClick={() => setDeleteConfirm({ open: false, eventId: null })}
+              style={{
+                background: "#757575",
+                color: "white",
+                border: "none",
+                padding: "8px 16px",
+                margin: "0 8px",
+                borderRadius: "4px",
+                cursor: "pointer"
+              }}
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="container">
       {/* Sidebar só para NÃO docentes */}
@@ -980,14 +1064,14 @@ const handleDatesSet = (arg) => {
           slotDuration="00:30:00"
           slotLabelInterval="00:30:00"
           slotLabelContent={slotLabelFormatter}
-          hiddenDays={[0]} /* Oculta o domingo (0 = domingo) */
-          /* Adiciona um listener para o clique direito (context menu) */
+          hiddenDays={[0]} /* Oculta o domingo (0 = domingo) */    
           eventDidMount={(info) => {
             info.el.addEventListener('contextmenu', (e) => {
               e.preventDefault(); // Previne o menu de contexto padrão
-              if (window.confirm("Deseja excluir este bloco horário?")) {
-                handleDeleteEvent(info.event.id);
-              }
+              setDeleteConfirm({ 
+                open: true, 
+                eventId: info.event.id 
+              });
             });
           }}
           eventContent={(eventInfo) => {
@@ -1015,6 +1099,7 @@ const handleDatesSet = (arg) => {
         message={popup.message}
         onClose={() => setPopup({ ...popup, open: false })}
       />
+      <DeleteConfirmPopup />
     </div>
   );
 };
