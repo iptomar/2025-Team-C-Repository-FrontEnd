@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { useHistory } from "react-router-dom";
 import turmaService from "../services/turmaService";
 import ucService from "../services/ucService";
 import cursoService from "../services/cursoService";
 
 function Add() {
+  const history = useHistory();
   const [escolha, setEscolha] = useState(""); // turma ou uc
   const [nome, setNome] = useState(""); // nome da turma ou UC
   const [mensagem, setMensagem] = useState("");
@@ -187,6 +189,26 @@ function Add() {
 
   return (
     <div style={{ padding: 32 }}>
+      {/* Botão bonito para voltar */}
+      <button
+        onClick={() => history.push("/crud")}
+        style={{
+          background: "#e0e7ef",
+          color: "#222",
+          border: "1px solid #b0b8c1",
+          borderRadius: 4,
+          padding: "8px 18px",
+          fontSize: "1rem",
+          cursor: "pointer",
+          marginBottom: 24,
+          marginRight: 12,
+          transition: "background 0.2s",
+        }}
+        onMouseOver={e => (e.target.style.background = "#c9d6e3")}
+        onMouseOut={e => (e.target.style.background = "#e0e7ef")}
+      >
+        ← Voltar à Gestão
+      </button>
       <h2>O que deseja adicionar?</h2>
       <button
         onClick={() => {

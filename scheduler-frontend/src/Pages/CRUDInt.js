@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useHistory } from "react-router-dom";
 import "../Styles/CRUDInt.css";
-
-// Importar os serviços de API
 import turmaService from "../services/turmaService";
 import salaService from "../services/salaService";
 import escolaService from "../services/escolaService";
 import cursoService from "../services/cursoService";
-import ucService from "../services/ucService"; // Para UCs
-import utilizadorService from "../services/utilizadorService"; // Para professores
+import ucService from "../services/ucService";
+import utilizadorService from "../services/utilizadorService";
 import api from "../services/api";
 
 function CRUDInt() {
@@ -46,14 +44,31 @@ function CRUDInt() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedType, setSelectedType] = useState("professores");
 
+  // Estado para edição
+  const [editData, setEditData] = useState(null);
+
+  // Hook para navegação
+  const history = useHistory();
+
+  // Carregar dados iniciais ao montar o componente
   useEffect(() => {
     fetchData();
     fetchEscolas();
     fetchCursos();
   }, []);
 
-  const history = useHistory();
+  // Função para saber se pode editar (apenas UCs e turmas)
+  const canEdit = () => {
+    return selectedType === "UCs" || selectedType === "turmas";
+  };
 
+  // Função para saber se pode remover (apenas UCs e turmas)
+  const canRemove = () => {
+    return selectedType === "UCs" || selectedType === "turmas";
+  };
+
+  // Função para filtrar listas com base no tipo
+  // e no termo de pesquisa
   const filterList = (items, type) => {
     let search = "";
     switch (type) {
@@ -127,6 +142,7 @@ function CRUDInt() {
     }
   };
 
+  // Função para buscar cursos
   const fetchCursos = async () => {
     try {
       const response = await cursoService.getAll();
@@ -135,18 +151,19 @@ function CRUDInt() {
       setError("Erro ao carregar cursos: " + err.message);
     }
   };
-  // -----
 
   // Função para remover um item
   const handleRemove = async () => {
     if (selectedItem === null) return;
 
+    if (!canRemove()) {
+      setError("Não é possível remover Professores ou Salas.");
+      return;
+    }
+
+    // Limpar mensagem de erro antes de tentar remover
     try {
       switch (selectedType) {
-        case "professores":
-          setError("Remoção de professores não suportada.");
-          break;
-
         case "UCs":
           const disciplina = UCs[selectedItem];
           const idDisc = disciplina.idUC || disciplina.IdUC;
@@ -163,21 +180,12 @@ function CRUDInt() {
           setTurmas(turmasResponse.data);
           break;
 
-        case "salas":
-          const sala = salas[selectedItem];
-          const idSala = sala.idSala || sala.id;
-          await salaService.delete(idSala);
-          const salasResponse = await salaService.getAll();
-          setSalas(salasResponse.data);
-          break;
-
         default:
           break;
       }
 
       setSelectedItem(null);
     } catch (err) {
-      // Verifica se a resposta contém uma mensagem de erro específica
       const apiMessage =
         err.response && err.response.data && err.response.data.message
           ? err.response.data.message
@@ -210,12 +218,45 @@ function CRUDInt() {
     }
   };
 
+  // Função para iniciar edição
+  const handleEdit = () => {
+    if (selectedItem === null) return;
+    if (selectedType === "UCs") {
+      setEditData({ ...UCs[selectedItem] });
+    } else if (selectedType === "turmas") {
+      setEditData({ ...turmas[selectedItem] });
+    }
+  };
+
+  // Função para salvar edição
+  const handleSaveEdit = async () => {
+    try {
+      if (selectedType === "UCs") {
+        const id = editData.idUC || editData.IdUC;
+        await ucService.update(id, editData);
+        const ucsResponse = await ucService.getAll();
+        setUCs(ucsResponse.data);
+      } else if (selectedType === "turmas") {
+        const id = editData.idTurma || editData.id;
+        await turmaService.update(id, editData);
+        const turmasResponse = await turmaService.getAll();
+        setTurmas(turmasResponse.data);
+      }
+      setEditData(null);
+      setSelectedItem(null);
+    } catch (err) {
+      setError("Erro ao salvar edição: " + err.message);
+    }
+  };
+
   // Função para lidar com o clique do botão Adicionar/Editar
   const handleAddOrEdit = () => {
     if (selectedItem === null) {
       history.push("/add");
     } else {
-      // Logica para editar o item selecionado
+      if (canEdit()) {
+        handleEdit();
+      }
     }
   };
 
@@ -317,20 +358,182 @@ function CRUDInt() {
 
       {/* Botões globais */}
       <div className="action-buttons-container">
-        <button className="action-button" onClick={handleAddOrEdit}>
-          {selectedItem !== null ? "Editar" : "Adicionar"}
+        <button
+          className="action-button"
+          onClick={handleAddOrEdit}
+          disabled={selectedItem !== null && !canEdit()}
+          title={
+            selectedItem !== null && !canEdit()
+              ? "Não é possível editar Professores ou Salas"
+              : selectedItem !== null
+              ? "Editar"
+              : "Adicionar"
+          }
+          style={
+            selectedItem !== null && !canEdit()
+              ? { background: "#ccc", cursor: "not-allowed" }
+              : {}
+          }
+        >
+          {selectedItem !== null
+            ? canEdit()
+              ? "Editar"
+              : "Editar não disponível"
+            : "Adicionar"}
         </button>
         <button
           className="action-button"
           onClick={handleRemove}
-          disabled={selectedItem === null}
+          disabled={selectedItem === null || !canRemove()}
+          title={
+            selectedItem !== null && !canRemove()
+              ? "Não é possível remover Professores ou Salas"
+              : "Remover"
+          }
+          style={
+            selectedItem !== null && !canRemove()
+              ? { background: "#ccc", cursor: "not-allowed" }
+              : {}
+          }
         >
-          Remover
+          {selectedItem !== null && !canRemove()
+            ? "Remover não disponível"
+            : "Remover"}
         </button>
         <button className="action-button" onClick={fetchData}>
           Recarregar
         </button>
       </div>
+
+      {/* Modal de edição para UC e Turma */}
+      {editData && (
+        <div
+          className="edit-modal"
+          style={{
+            background: "#fff",
+            border: "1px solid #ccc",
+            padding: "20px",
+            margin: "20px 0",
+          }}
+        >
+          <h3>Editar {selectedType === "UCs" ? "UC" : "Turma"}</h3>
+          {selectedType === "UCs" ? (
+            <>
+              <input
+                type="text"
+                value={editData.nomeUC || ""}
+                onChange={e =>
+                  setEditData({ ...editData, nomeUC: e.target.value })
+                }
+                placeholder="Nome da UC"
+                style={{ marginBottom: 8, width: "100%" }}
+              />
+              {/* Dropdown para Tipo UC */}
+              <select
+                value={editData.tipoUC || ""}
+                onChange={e =>
+                  setEditData({ ...editData, tipoUC: e.target.value })
+                }
+                style={{ marginBottom: 8, width: "100%" }}
+              >
+                <option value="">Selecione o tipo</option>
+                <option value="Teórico-prática">Teórico-prática</option>
+                <option value="Teórica">Teórica</option>
+                <option value="Prática">Prática</option>
+              </select>
+              {/* Dropdown para Grau Académico */}
+              <select
+                value={editData.grauAcademico || ""}
+                onChange={e =>
+                  setEditData({ ...editData, grauAcademico: e.target.value })
+                }
+                style={{ marginBottom: 8, width: "100%" }}
+              >
+                <option value="">Selecione o grau académico</option>
+                <option value="Licenciatura">Licenciatura</option>
+                <option value="Mestrado">Mestrado</option>
+                <option value="Doutoramento">Doutoramento</option>
+              </select>
+              {/* Dropdown para Semestre */}
+              <select
+                value={editData.semestre || ""}
+                onChange={e =>
+                  setEditData({ ...editData, semestre: e.target.value })
+                }
+                style={{ marginBottom: 8, width: "100%" }}
+              >
+                <option value="">Selecione o semestre</option>
+                <option value="1º">1º Semestre</option>
+                <option value="2º">2º Semestre</option>
+                <option value="Anual">Anual</option>
+              </select>
+              <input
+                type="number"
+                value={editData.ano || ""}
+                onChange={e =>
+                  setEditData({ ...editData, ano: e.target.value })
+                }
+                placeholder="Ano"
+                style={{ marginBottom: 8, width: "100%" }}
+              />
+              {/* Dropdown para Curso */}
+              <select
+                value={editData.cursoFK || ""}
+                onChange={e =>
+                  setEditData({ ...editData, cursoFK: e.target.value })
+                }
+                style={{ marginBottom: 8, width: "100%" }}
+              >
+                <option value="">Selecione o Curso</option>
+                {cursos.map((curso) => (
+                  <option key={curso.idCurso} value={curso.idCurso}>
+                    {curso.nome}
+                  </option>
+                ))}
+              </select>
+            </>
+          ) : (
+            <>
+              <input
+                type="text"
+                value={editData.nome || ""}
+                onChange={e =>
+                  setEditData({ ...editData, nome: e.target.value })
+                }
+                placeholder="Nome da Turma"
+                style={{ marginBottom: 8, width: "100%" }}
+              />
+              {/* Dropdown para Curso */}
+              <select
+                value={editData.cursoFK || ""}
+                onChange={e =>
+                  setEditData({ ...editData, cursoFK: e.target.value })
+                }
+                style={{ marginBottom: 8, width: "100%" }}
+              >
+                <option value="">Selecione o Curso</option>
+                {cursos.map((curso) => (
+                  <option key={curso.idCurso} value={curso.idCurso}>
+                    {curso.nome}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+          <div style={{ marginTop: 10 }}>
+            <button className="action-button" onClick={handleSaveEdit}>
+              Guardar
+            </button>
+            <button
+              className="action-button"
+              style={{ marginLeft: 8 }}
+              onClick={() => setEditData(null)}
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Listas de itens com indicadores de carregamento */}
       <div style={{ marginTop: "20px" }}>
@@ -344,11 +547,11 @@ function CRUDInt() {
         />
         <ul className="scrollable-list">
           {loading.professores ? (
-            <li>Carregando professores...</li>
+            <li>A carregar docentes...</li>
           ) : professores.length > 0 ? (
-            renderList(filterList(professores, "professores"))
+            renderList(filterList(professores, "professores"), "professores")
           ) : (
-            <li>Nenhum professor cadastrado</li>
+            <li>Nenhum professor registado</li>
           )}
         </ul>
 
@@ -362,11 +565,11 @@ function CRUDInt() {
         />
         <ul className="scrollable-list">
           {loading.UCs ? (
-            <li>Carregando UCs...</li>
+            <li>A carregar UCs...</li>
           ) : UCs.length > 0 ? (
             renderList(filterList(filteredUCs, "UCs"), "UCs")
           ) : (
-            <li>Nenhuma disciplina cadastrada</li>
+            <li>Nenhuma UC registada</li>
           )}
         </ul>
 
@@ -380,11 +583,11 @@ function CRUDInt() {
         />
         <ul className="scrollable-list">
           {loading.turmas ? (
-            <li>Carregando turmas...</li>
+            <li>A carregar turmas...</li>
           ) : turmas.length > 0 ? (
             renderList(filterList(filteredTurmas, "turmas"), "turmas")
           ) : (
-            <li>Nenhuma turma cadastrada</li>
+            <li>Nenhuma turma registada</li>
           )}
         </ul>
 
@@ -398,11 +601,11 @@ function CRUDInt() {
         />
         <ul className="scrollable-list">
           {loading.salas ? (
-            <li>Carregando salas...</li>
+            <li>A carregar salas...</li>
           ) : salas.length > 0 ? (
             renderList(filterList(salas, "salas"), "salas")
           ) : (
-            <li>Nenhuma sala cadastrada</li>
+            <li>Nenhuma sala registada</li>
           )}
         </ul>
       </div>
