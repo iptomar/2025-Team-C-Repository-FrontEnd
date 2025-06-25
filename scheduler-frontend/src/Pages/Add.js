@@ -20,7 +20,10 @@ function Add() {
   // Buscar cursos ao montar
   useEffect(() => {
     if (escolha === "turma" || escolha === "uc") {
-      cursoService.getAll().then(res => setCursos(res.data)).catch(() => setCursos([]));
+      cursoService
+        .getAll()
+        .then((res) => setCursos(res.data))
+        .catch(() => setCursos([]));
     }
   }, [escolha]);
 
@@ -71,27 +74,33 @@ function Add() {
       return (
         <form style={{ marginTop: 24 }} onSubmit={handleSubmit}>
           <h3>Adicionar Turma</h3>
+          <label>Nome da Turma:</label>
           <input
             type="text"
-            placeholder="Nome da Turma"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
             required
           />
+          <label>Curso:</label>
           <select
             value={cursoFK}
-            onChange={e => setCursoFK(e.target.value)}
+            onChange={(e) => setCursoFK(e.target.value)}
             required
             style={{ marginLeft: 8 }}
           >
             <option value="">Selecione o curso</option>
-            {cursos.map(curso => (
-              <option key={curso.id || curso.Id || curso.idCurso} value={curso.id || curso.Id || curso.idCurso}>
+            {cursos.map((curso) => (
+              <option
+                key={curso.id || curso.Id || curso.idCurso}
+                value={curso.id || curso.Id || curso.idCurso}
+              >
                 {curso.nome || curso.Nome}
               </option>
             ))}
           </select>
-          <button type="submit" style={{ marginLeft: 8 }}>Guardar</button>
+          <button type="submit" style={{ marginLeft: 8 }}>
+            Guardar
+          </button>
         </form>
       );
     }
@@ -99,44 +108,50 @@ function Add() {
       return (
         <form style={{ marginTop: 24 }} onSubmit={handleSubmit}>
           <h3>Adicionar UC</h3>
+          <label>Nome da Unidade Curricular:</label>
           <input
             type="text"
-            placeholder="Nome da UC"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
             required
           />
-          <input
-            type="text"
-            placeholder="Tipo UC"
+          <label>Tipo de Unidade Curricular:</label>
+          <select
             value={tipoUC}
             onChange={(e) => setTipoUC(e.target.value)}
             required
             style={{ marginLeft: 8 }}
-          />
-          <input
-            type="text"
-            placeholder="Grau Académico"
+          >
+            <option value="">Selecione um tipo</option>
+            <option value="Teórico-prática">Teórico-prática</option>
+            <option value="Teórica">Teórica</option>
+            <option value="Prática">Prática</option>
+          </select>
+          <label>Grau Académico:</label>
+          <select
             value={grauAcademico}
             onChange={(e) => setGrauAcademico(e.target.value)}
             required
             style={{ marginLeft: 8 }}
-          />
-          <input
-            type="text"
-            placeholder="Tipologia"
-            value={tipologia}
-            onChange={(e) => setTipologia(e.target.value)}
-            style={{ marginLeft: 8 }}
-          />
-          <input
-            type="text"
-            placeholder="Semestre"
+          >
+            <option value="">Selecione um grau</option>
+            <option value="Licenciatura">Licenciatura</option>
+            <option value="Mestrado">Mestrado</option>
+            <option value="Doutoramento">Doutoramento</option>
+          </select>
+          <label>Semestre:</label>
+          <select
             value={semestre}
             onChange={(e) => setSemestre(e.target.value)}
             required
             style={{ marginLeft: 8 }}
-          />
+          >
+            <option value="">Selecione um semestre</option>
+            <option value="1º">1º Semestre</option>
+            <option value="2º">2º Semestre</option>
+            <option value="Anual">Anual</option>
+          </select>
+          <label>Ano:</label>
           <input
             type="number"
             placeholder="Ano"
@@ -144,20 +159,26 @@ function Add() {
             onChange={(e) => setAno(e.target.value)}
             style={{ marginLeft: 8, width: 70 }}
           />
+          <label>Curso:</label>
           <select
             value={cursoFK}
-            onChange={e => setCursoFK(e.target.value)}
+            onChange={(e) => setCursoFK(e.target.value)}
             required
             style={{ marginLeft: 8 }}
           >
             <option value="">Selecione o curso</option>
-            {cursos.map(curso => (
-              <option key={curso.id || curso.Id || curso.idCurso} value={curso.id || curso.Id || curso.idCurso}>
+            {cursos.map((curso) => (
+              <option
+                key={curso.id || curso.Id || curso.idCurso}
+                value={curso.id || curso.Id || curso.idCurso}
+              >
                 {curso.nome || curso.Nome}
               </option>
             ))}
           </select>
-          <button type="submit" style={{ marginLeft: 8 }}>Guardar</button>
+          <button type="submit" style={{ marginLeft: 8 }}>
+            Guardar
+          </button>
         </form>
       );
     }
@@ -167,8 +188,21 @@ function Add() {
   return (
     <div style={{ padding: 32 }}>
       <h2>O que deseja adicionar?</h2>
-      <button onClick={() => { setEscolha("turma"); setMensagem(""); }}>Adicionar Turma</button>
-      <button onClick={() => { setEscolha("uc"); setMensagem(""); }} style={{ marginLeft: 16 }}>
+      <button
+        onClick={() => {
+          setEscolha("turma");
+          setMensagem("");
+        }}
+      >
+        Adicionar Turma
+      </button>
+      <button
+        onClick={() => {
+          setEscolha("uc");
+          setMensagem("");
+        }}
+        style={{ marginLeft: 16 }}
+      >
         Adicionar UC
       </button>
       {renderFormulario()}

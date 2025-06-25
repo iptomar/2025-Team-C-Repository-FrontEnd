@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useHistory } from "react-router-dom";
 import "../Styles/CRUDInt.css";
 
 // Importar os serviços de API
@@ -50,6 +51,8 @@ function CRUDInt() {
     fetchEscolas();
     fetchCursos();
   }, []);
+
+  const history = useHistory();
 
   const filterList = (items, type) => {
     let search = "";
@@ -207,6 +210,15 @@ function CRUDInt() {
     }
   };
 
+  // Função para lidar com o clique do botão Adicionar/Editar
+  const handleAddOrEdit = () => {
+    if (selectedItem === null) {
+      history.push("/add");
+    } else {
+      // Logica para editar o item selecionado
+    }
+  };
+
   // Função para renderizar uma lista com tratamento de objetos
   const renderList = (items, type) => {
     return items.map((item, index) => {
@@ -305,7 +317,7 @@ function CRUDInt() {
 
       {/* Botões globais */}
       <div className="action-buttons-container">
-        <button className="action-button">
+        <button className="action-button" onClick={handleAddOrEdit}>
           {selectedItem !== null ? "Editar" : "Adicionar"}
         </button>
         <button
