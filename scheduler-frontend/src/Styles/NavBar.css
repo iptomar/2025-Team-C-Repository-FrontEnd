@@ -11,7 +11,7 @@
   z-index: 1000;
 }
 
-.navbar-logo-container {
+.navbar-home-container {
   display: flex;
   align-items: center;
 }
@@ -39,7 +39,7 @@
   border-bottom: 3px solid #57BB4C;
 }
 
-.navbar-login-btn {
+.navbar-home-btn {
   text-decoration: none;
   color: #fff;
   background: #57BB4C;
@@ -48,6 +48,6 @@
   font-size: 14px;
 }
 
-.navbar-login-btn:hover {
+.navbar-home-btn:hover {
   background: #45a23a;
 }
