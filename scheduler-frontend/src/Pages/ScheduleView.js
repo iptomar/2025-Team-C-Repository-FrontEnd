@@ -16,8 +16,10 @@ import connection from "../services/signalrConnection";
 import { formatRange } from "@fullcalendar/core/index.js";
 import { useHistory } from "react-router-dom";
 import { jwtDecode } from "jwt-decode"; // Importar a biblioteca de descodificar as JWTs
+import Popup from "../Components/Popup";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+
 
 const ScheduleView = () => {
   // Novo estado para guardar info do utilizador autenticado
@@ -43,6 +45,12 @@ const ScheduleView = () => {
   const [classFilter, setClassFilter] = useState("");
 
   // Lista - Dropdowns
+
+  
+  
+  
+  // Popup para mensagens de erro
+  const [popup, setPopup] = useState({ open: false, message: "" });
 
   // Hierarquia
   const [schoolList, setSchoolList] = useState([]);
@@ -108,7 +116,7 @@ const ScheduleView = () => {
       setEvents(apiEvents);
       setAllEvents(apiEvents);
     } catch (error) {
-      alert("Erro ao carregar blocos horários.");
+      setPopup({ open: true, message: "Erro ao carregar blocos horários." });
     } finally {
       setLoading(false);
     }
@@ -367,11 +375,11 @@ const ScheduleView = () => {
       // Enviar requisição POST para a API
       const response = await blocoHorarioService.create(novoBloco);
       if (!(response.status === 201 || response.status === 200)) {
-        alert("Erro ao criar bloco horário.");
+        setPopup({ open: true, message: "Erro ao criar bloco horário." });
         return;
       }
     } else {
-      alert("Por favor, preencha selecione todos os campos.");
+      setPopup({ open: true, message: "Por favor, preencha selecione todos os campos." });
     }
   };
 
@@ -418,11 +426,11 @@ const ScheduleView = () => {
         blocoAtualizado
       );
       if (!(response.status === 200 || response.status === 204)) {
-        alert("Erro ao atualizar bloco na API.");
+        setPopup({ open: true, message: "Erro ao atualizar bloco na API." });
         info.revert();
       }
     } catch (error) {
-      alert("Erro ao atualizar bloco na API.");
+      setPopup({ open: true, message: "Erro ao atualizar bloco na API." });
       info.revert();
     }
   };
@@ -434,10 +442,10 @@ const ScheduleView = () => {
       const response = await blocoHorarioService.delete(eventId);
       // Tratar o estado da resposta
       if (!(response.status === 200 || response.status === 204)) {
-        alert("Erro ao excluir bloco.");
+        setPopup({ open: true, message: "Erro ao excluir bloco." });
       }
     } catch (error) {
-      alert("Erro ao excluir bloco.");
+      setPopup({ open: true, message: "Erro ao excluir bloco." });
     }
   };
 
@@ -1002,6 +1010,11 @@ const handleDatesSet = (arg) => {
           }}
         />
       </div>
+      <Popup
+        open={popup.open}
+        message={popup.message}
+        onClose={() => setPopup({ ...popup, open: false })}
+      />
     </div>
   );
 };
