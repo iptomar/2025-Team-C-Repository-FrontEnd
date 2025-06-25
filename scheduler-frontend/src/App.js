@@ -8,7 +8,6 @@ import Home from './Pages/Home';
 import UploadData from './Pages/UploadData';
 import Navbar from './Pages/NavBar';
 import Add from './Pages/Add'; // Página de adicionar dados
-import Navbar from './Pages/NavBar';
 
 const AppContent = () => {
   const location = useLocation();
