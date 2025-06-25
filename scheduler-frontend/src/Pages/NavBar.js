@@ -54,11 +54,20 @@ const Navbar = () => {
       </div>
       
       {/* Botão para regressar à página inicial */}
-      <div>
+        <div className="navbar-right">
         <Link to="/" className="navbar-home-btn">
-          Home
+            Home
         </Link>
-      </div>
+        {/* Botão para dar logout */}
+        <button 
+            onClick={() => {
+            localStorage.removeItem('token');
+            window.location.href = '/';
+            }} 
+            className="navbar-logout-btn">
+            Logout
+        </button>
+        </div>
     </nav>
   );
 };
