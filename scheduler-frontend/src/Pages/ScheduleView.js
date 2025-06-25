@@ -821,234 +821,217 @@ const ScheduleView = () => {
 
   return (
     <div className="container">
-      {userRole !== "Docente" && (
-        <div className="SideBar">
-          <button
-            style={{
-              width: "100%",
-              marginBottom: 16,
-              background: "#57BB4C",
-              color: "white",
-              fontWeight: "bold",
-              fontSize: "1rem",
-              border: "none",
-              borderRadius: 4,
-              padding: "10px 0",
-              cursor: "pointer",
-            }}
-            onClick={repeatCurrentWeek}
-            disabled={loading}
-          >
-            Repetir Semana Visível
-          </button>
+      <div className="SideBar">
+        {/* Botão de exportação disponível para TODOS os utilizadores */}
+        <button
+          style={{
+            width: "100%",
+            marginBottom: 16,
+            background: "#1976d2",
+            color: "white",
+            fontWeight: "bold",
+            fontSize: "1rem",
+            border: "none",
+            borderRadius: 4,
+            padding: "10px 0",
+            cursor: "pointer",
+          }}
+          onClick={() => exportScheduleToPDF(events)}
+        >
+          Exportar Horário para PDF
+        </button>
 
-          <button
-            style={{
-              width: "100%",
-              marginBottom: 16,
-              background: "#1976d2",
-              color: "white",
-              fontWeight: "bold",
-              fontSize: "1rem",
-              border: "none",
-              borderRadius: 4,
-              padding: "10px 0",
-              cursor: "pointer",
-            }}
-            onClick={() => exportScheduleToPDF(events)}
-          >
-            Exportar Horário para PDF
-          </button>
-          <h2>Hierarquia</h2>
+        {/* Restante da barra lateral apenas para não-docentes */}
+        {userRole !== "Docente" && (
+          <>
+            <button
+              style={{
+                width: "100%",
+                marginBottom: 16,
+                background: "#57BB4C",
+                color: "white",
+                fontWeight: "bold",
+                fontSize: "1rem",
+                border: "none",
+                borderRadius: 4,
+                padding: "10px 0",
+                cursor: "pointer",
+              }}
+              onClick={repeatCurrentWeek}
+              disabled={loading}
+            >
+              Repetir Semana Visível
+            </button>
 
-          <div className="form-group">
-            <label htmlFor="escola">Escola:</label>
-            <select
-              id="escola"
-              value={selectedSchool}
-              onChange={(e) => setSelectedSchool(e.target.value)}
-            >
-              <option value="">Selecione uma escola</option>
-              {schoolList && schoolList.length > 0 ? (
-                schoolList.map((school) => (
-                  <option key={school.idEscola} value={school.idEscola}>
-                    {school.nome}
-                  </option>
-                ))
-              ) : (
-                <option disabled>A carregar escolas...</option>
-              )}
-            </select>
-          </div>
+            <h2>Hierarquia</h2>
 
-          <div className="form-group">
-            <label htmlFor="curso">Curso:</label>
-            <select
-              id="curso"
-              value={selectedDegree}
-              onChange={(e) => setSelectedDegree(e.target.value)}
-              disabled={!selectedSchool} // Desabilita se não houver escola selecionada
-            >
-              <option value="">Selecione um curso</option>
-              {filteredDegreeList && filteredDegreeList.length > 0 ? (
-                filteredDegreeList.map((degree) => (
-                  <option key={degree.idCurso} value={degree.idCurso}>
-                    {degree.nome}
-                  </option>
-                ))
-              ) : (
-                <option disabled>A carregar cursos...</option>
-              )}
-            </select>
-          </div>
+            <div className="form-group">
+              <label htmlFor="escola">Escola:</label>
+              <select
+                id="escola"
+                value={selectedSchool}
+                onChange={(e) => setSelectedSchool(e.target.value)}
+              >
+                <option value="">Selecione uma escola</option>
+                {schoolList && schoolList.length > 0 ? (
+                  schoolList.map((school) => (
+                    <option key={school.idEscola} value={school.idEscola}>
+                      {school.nome}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>A carregar escolas...</option>
+                )}
+              </select>
+            </div>
 
-          <h2>Criar Bloco</h2>
-          <div className="form-group">
-            <label htmlFor="teacher">Professor:</label>
-            <select
-              id="teacher"
-              value={teacher}
-              onChange={(e) => setTeacher(e.target.value)}
-              disabled={!selectedDegree} // Desabilita se não houver curso selecionado
-            >
-              <option value="">Selecione um professor</option>
-              {teacherList && teacherList.length > 0 ? (
-                teacherList.map((prof) => (
-                  <option key={prof.idUtilizador} value={prof.idUtilizador}>
-                    {prof.nome}
-                  </option>
-                ))
-              ) : (
-                <option disabled>A carregar professores...</option>
-              )}
-            </select>
-          </div>
-          <div className="form-group">
-            <label htmlFor="room">Sala:</label>
-            <select
-              id="room"
-              value={room}
-              onChange={(e) => setRoom(e.target.value)}
-              disabled={!selectedDegree} // Desabilita se não houver curso selecionado
-            >
-              <option value="">Selecione uma sala</option>
-              {roomList && roomList.length > 0 ? (
-                roomList.map((room) => (
-                  <option key={room.idSala} value={room.idSala}>
-                    {room.nome}
-                  </option>
-                ))
-              ) : (
-                <option disabled>A carregar salas...</option>
-              )}
-            </select>
-          </div>
-          <div className="form-group">
-            <label htmlFor="subject">Disciplina:</label>
-            <select
-              id="subject"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              disabled={!selectedDegree} // Desabilita se não houver curso selecionado
-            >
-              <option value="">Selecione uma Unidade Curricular</option>
-              {filteredSubjectList && filteredSubjectList.length > 0 ? (
-                filteredSubjectList.map((subject) => (
-                  <option key={subject.idUC} value={subject.idUC}>
-                    {subject.nomeUC}
-                  </option>
-                ))
-              ) : (
-                <option disabled>A carregar UCs...</option>
-              )}
-            </select>
-          </div>
+            <div className="form-group">
+              <label htmlFor="curso">Curso:</label>
+              <select
+                id="curso"
+                value={selectedDegree}
+                onChange={(e) => setSelectedDegree(e.target.value)}
+                disabled={!selectedSchool} // Desabilita se não houver escola selecionada
+              >
+                <option value="">Selecione um curso</option>
+                {filteredDegreeList && filteredDegreeList.length > 0 ? (
+                  filteredDegreeList.map((degree) => (
+                    <option key={degree.idCurso} value={degree.idCurso}>
+                      {degree.nome}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>A carregar cursos...</option>
+                )}
+              </select>
+            </div>
 
-          {/* Novo dropdown para Turma */}
-          <div className="form-group">
-            <label htmlFor="selectedClass">Turma:</label>
-            <select
-              id="selectedClass"
-              value={selectedClass}
-              onChange={(e) => setSelectedClass(e.target.value)}
-              disabled={!selectedDegree}
-            >
-              <option value="">Selecione uma turma</option>
-              {filteredClassList && filteredClassList.length > 0 ? (
-                filteredClassList.map((turma) => (
-                  <option key={turma.idTurma} value={turma.idTurma}>
-                    {turma.nome}
-                  </option>
-                ))
-              ) : (
-                <option disabled>A carregar turmas...</option>
-              )}
-            </select>
-          </div>
+            <h2>Criar Bloco</h2>
+            <div className="form-group">
+              <label htmlFor="teacher">Professor:</label>
+              <select
+                id="teacher"
+                value={teacher}
+                onChange={(e) => setTeacher(e.target.value)}
+                disabled={!selectedDegree} // Desabilita se não houver curso selecionado
+              >
+                <option value="">Selecione um professor</option>
+                {teacherList && teacherList.length > 0 ? (
+                  teacherList.map((prof) => (
+                    <option key={prof.idUtilizador} value={prof.idUtilizador}>
+                      {prof.nome}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>A carregar professores...</option>
+                )}
+              </select>
+            </div>
+            <div className="form-group">
+              <label htmlFor="room">Sala:</label>
+              <select
+                id="room"
+                value={room}
+                onChange={(e) => setRoom(e.target.value)}
+                disabled={!selectedDegree} // Desabilita se não houver curso selecionado
+              >
+                <option value="">Selecione uma sala</option>
+                {roomList && roomList.length > 0 ? (
+                  roomList.map((room) => (
+                    <option key={room.idSala} value={room.idSala}>
+                      {room.nome}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>A carregar salas...</option>
+                )}
+              </select>
+            </div>
+            <div className="form-group">
+              <label htmlFor="subject">Disciplina:</label>
+              <select
+                id="subject"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                disabled={!selectedDegree} // Desabilita se não houver curso selecionado
+              >
+                <option value="">Selecione uma Unidade Curricular</option>
+                {filteredSubjectList && filteredSubjectList.length > 0 ? (
+                  filteredSubjectList.map((subject) => (
+                    <option key={subject.idUC} value={subject.idUC}>
+                      {subject.nomeUC}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>A carregar UCs...</option>
+                )}
+              </select>
+            </div>
 
-          <h2>Filtros</h2>
-          <div className="form-group">
-            <label htmlFor="teacherFilter">Docente:</label>
-            <select
-              id="teacherFilter"
-              value={teacherFilter}
-              onChange={(e) => setTeacherFilter(e.target.value)}
-              disabled={userRole === "Docente"}
-            >
-              <option value="">Selecione um docente</option>
-              {teacherList && teacherList.length > 0 ? (
-                teacherList.map((prof) => (
-                  <option key={prof.idUtilizador} value={prof.idUtilizador}>
-                    {prof.nome}
-                  </option>
-                ))
-              ) : (
-                <option disabled>A carregar docentes...</option>
-              )}
-            </select>
-          </div>
+            <h2>Filtros</h2>
+            <div className="form-group">
+              <label htmlFor="teacherFilter">Docente:</label>
+              <select
+                id="teacherFilter"
+                value={teacherFilter}
+                onChange={(e) => setTeacherFilter(e.target.value)}
+                disabled={userRole === "Docente"}
+              >
+                <option value="">Selecione um docente</option>
+                {teacherList && teacherList.length > 0 ? (
+                  teacherList.map((prof) => (
+                    <option key={prof.idUtilizador} value={prof.idUtilizador}>
+                      {prof.nome}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>A carregar docentes...</option>
+                )}
+              </select>
+            </div>
 
-          <div className="form-group">
-            <label htmlFor="roomFilter">Sala:</label>
-            <select
-              id="roomFilter"
-              value={roomFilter}
-              onChange={(e) => setRoomFilter(e.target.value)}
-            >
-              <option value="">Selecione uma sala</option>
-              {roomList && roomList.length > 0 ? (
-                roomList.map((room) => (
-                  <option key={room.idSala} value={room.idSala}>
-                    {room.nome}
-                  </option>
-                ))
-              ) : (
-                <option disabled>A carregar salas...</option>
-              )}
-            </select>
-          </div>
+            <div className="form-group">
+              <label htmlFor="roomFilter">Sala:</label>
+              <select
+                id="roomFilter"
+                value={roomFilter}
+                onChange={(e) => setRoomFilter(e.target.value)}
+              >
+                <option value="">Selecione uma sala</option>
+                {roomList && roomList.length > 0 ? (
+                  roomList.map((room) => (
+                    <option key={room.idSala} value={room.idSala}>
+                      {room.nome}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>A carregar salas...</option>
+                )}
+              </select>
+            </div>
 
-          <div className="form-group">
-            <label htmlFor="classFilter">Turma:</label>
-            <select
-              id="classFilter"
-              value={classFilter}
-              onChange={(e) => setClassFilter(e.target.value)}
-            >
-              <option value="">Selecione uma Turma</option>
-              {classList && classList.length > 0 ? (
-                classList.map((turma) => (
-                  <option key={turma.idTurma} value={turma.idTurma}>
-                    {turma.nome}
-                  </option>
-                ))
-              ) : (
-                <option disabled>A carregar turmas...</option>
-              )}
-            </select>
-          </div>
-        </div>
-      )}
+            <div className="form-group">
+              <label htmlFor="classFilter">Turma:</label>
+              <select
+                id="classFilter"
+                value={classFilter}
+                onChange={(e) => setClassFilter(e.target.value)}
+              >
+                <option value="">Selecione uma Turma</option>
+                {classList && classList.length > 0 ? (
+                  classList.map((turma) => (
+                    <option key={turma.idTurma} value={turma.idTurma}>
+                      {turma.nome}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>A carregar turmas...</option>
+                )}
+              </select>
+            </div>
+          </>
+        )}
+      </div>
       <div className="ScheduleView">
         <FullCalendar
           plugins={[timeGridPlugin, interactionPlugin]}
