@@ -17,6 +17,9 @@ import { formatRange } from "@fullcalendar/core/index.js";
 import { useHistory } from "react-router-dom";
 import { jwtDecode } from "jwt-decode"; // Importar a biblioteca de descodificar as JWTs
 import Popup from "../Components/Popup";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
 
 const ScheduleView = () => {
   // Novo estado para guardar info do utilizador autenticado
@@ -62,6 +65,7 @@ const ScheduleView = () => {
   const [subjectList, setSubjectList] = useState([]);
 
   const history = useHistory();
+
   // 1. Carregar role e userId do JWT
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -321,7 +325,14 @@ const ScheduleView = () => {
   // 3. Aplica filtros de forma automática / hierarquia
   useEffect(() => {
     applyFilters();
-  }, [teacherFilter, roomFilter, classFilter, allEvents, selectedSchool, selectedDegree]);
+  }, [
+    teacherFilter,
+    roomFilter,
+    classFilter,
+    allEvents,
+    selectedSchool,
+    selectedDegree,
+  ]);
 
   // Método de criação de um bloco horário
   // Este método é chamado quando o utilizador clica em uma data no calendário
@@ -453,6 +464,147 @@ const ScheduleView = () => {
     return `${formatTime(start)} - ${formatTime(end)}`;
   };
 
+  // Função utilitária para obter a semana de uma data (segunda a sábado)
+  function getWeekStart(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    // getDay: 0=Dom, 1=Seg, ..., 6=Sab
+    const diff = d.getDate() - (day === 0 ? 6 : day - 1); // segunda
+    d.setDate(diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  // Função para exportar o horário para PDF
+  const exportScheduleToPDF = (events) => {
+    if (!events || events.length === 0) {
+      alert("Não há blocos para exportar.");
+      return;
+    }
+    // Agrupar eventos por semana
+    const eventsByWeek = {};
+    events.forEach((event) => {
+      const weekStart = getWeekStart(event.start);
+      const key = weekStart.toISOString().slice(0, 10);
+      if (!eventsByWeek[key]) eventsByWeek[key] = [];
+      eventsByWeek[key].push(event);
+    });
+
+    // Definir slots de 30min (08:30 a 24:00) no formato "08:30 - 09:00"
+    const slotStart = 8 * 60 + 30; // 08:30 em minutos
+    const slotEnd = 24 * 60; // 24:00 em minutos
+    const slots = [];
+    for (let min = slotStart; min < slotEnd; min += 30) {
+      const h1 = Math.floor(min / 60).toString().padStart(2, "0");
+      const m1 = (min % 60).toString().padStart(2, "0");
+      const h2 = Math.floor((min + 30) / 60).toString().padStart(2, "0");
+      const m2 = ((min + 30) % 60).toString().padStart(2, "0");
+      slots.push(`${h1}:${m1} - ${h2}:${m2}`);
+    }
+    const days = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+    const doc = new jsPDF();
+    let firstPage = true;
+    Object.entries(eventsByWeek).forEach(([weekKey, weekEvents]) => {
+      if (!firstPage) doc.addPage();
+      firstPage = false;
+      // Cabeçalho
+      doc.setFontSize(14);
+      doc.text(`Horário da semana começando em ${weekKey}`, 14, 15);
+      // Construir cabeçalho com dia da semana + data (ex: Seg. 19/05)
+      // Corrigir: garantir que segunda-feira corresponde ao dia 19/05/2025 se weekKey for 2025-05-18 (domingo)
+      // Se weekKey cair num domingo, avançar para segunda-feira
+      let weekStartDateBase = new Date(weekKey);
+      if (weekStartDateBase.getDay() === 0) {
+        // Domingo: avançar para segunda
+        weekStartDateBase.setDate(weekStartDateBase.getDate() + 1);
+      }
+      const weekHeader = [
+        "Hora",
+        ...days.map((dia, d) => {
+          const date = new Date(weekStartDateBase);
+          date.setDate(weekStartDateBase.getDate() + d);
+          const dayNum = date.getDate().toString().padStart(2, "0");
+          const monthNum = (date.getMonth() + 1).toString().padStart(2, "0");
+          // Abreviação do dia da semana em pt
+          const abbr = dia.slice(0, 3) + ".";
+          return `${abbr} ${dayNum}/${monthNum}`;
+        })
+      ];
+      // Nova lógica: para cada bloco da semana, coloca-o na célula correta do PDF
+      // 1. Montar matriz vazia para o corpo da tabela
+      const tableBody = Array(slots.length).fill(0).map(() => Array(days.length + 1).fill(""));
+      // 2. Preencher coluna 0 com os horários
+      for (let i = 0; i < slots.length; i++) {
+        tableBody[i][0] = slots[i];
+      }
+      // 3. Para cada bloco, calcular a posição (linha, coluna) e o rowSpan
+      weekEvents.forEach((bloco) => {
+        const evStart = new Date(bloco.start);
+        const evEnd = new Date(bloco.end);
+        // Descobrir coluna (dia da semana)
+        let weekStart = new Date(weekKey);
+        if (weekStart.getDay() === 0) weekStart.setDate(weekStart.getDate() + 1); // segunda
+        let col = Math.floor((evStart - weekStart) / (1000 * 60 * 60 * 24));
+        if (col < 0 || col > 5) return; // fora da semana
+        // Descobrir linha (slot)
+        const startHour = evStart.getHours();
+        const startMin = evStart.getMinutes();
+        const slotIdx = slots.findIndex(s => {
+          const [h, m] = s.split(" - ")[0].split(":").map(Number);
+          return h === startHour && m === startMin;
+        });
+        if (slotIdx === -1) return; // slot não encontrado
+        // Calcular rowSpan
+        const duration = (evEnd - evStart) / (1000 * 60); // em minutos
+        const span = Math.round(duration / 30);
+        // Preencher célula
+        tableBody[slotIdx][col + 1] = {
+          content: `${bloco.extendedProps.subject || ""}\n${bloco.extendedProps.teacher || ""}\nSala: ${bloco.extendedProps.room || ""}`,
+          rowSpan: span,
+          styles: { valign: 'middle' }
+        };
+        // Marcar slots ocupados para não duplicar
+        for (let i = 1; i < span; i++) {
+          if (tableBody[slotIdx + i]) tableBody[slotIdx + i][col + 1] = null;
+        }
+      });
+      // 4. Remover células nulas (slots ocupados por rowSpan)
+      const finalBody = tableBody.map(row => row.filter(cell => cell !== null));
+      autoTable(doc, {
+        head: [weekHeader],
+        body: finalBody,
+        startY: 15,
+        margin: { left: 5, right: 5 },
+        styles: { cellPadding: 1, fontSize: 7, minCellHeight: 4 },
+        headStyles: { fillColor: [87, 187, 76], fontSize: 8 },
+        columnStyles: {
+          0: { cellWidth: 22 }, // coluna Hora
+          1: { cellWidth: 27 },
+          2: { cellWidth: 27 },
+          3: { cellWidth: 27 },
+          4: { cellWidth: 27 },
+          5: { cellWidth: 27 },
+          6: { cellWidth: 27 },
+        },
+        didDrawCell: (data) => {
+          // Delimitar blocos de aula
+          if (data.cell.raw && data.cell.raw !== "") {
+            doc.setDrawColor(0, 128, 0);
+            doc.setLineWidth(0.5);
+            doc.rect(
+              data.cell.x,
+              data.cell.y,
+              data.cell.width,
+              data.cell.height
+            );
+          }
+        },
+      });
+    });
+    doc.save("horario-semanal.pdf");
+  };
+
   // Aplica os filtros
   const applyFilters = () => {
     let filtered = allEvents;
@@ -475,7 +627,7 @@ const ScheduleView = () => {
           (subject) => String(subject.cursoFK) === String(selectedDegree)
         )
       );
-      console.log(filteredSubjectList)
+      console.log(filteredSubjectList);
     } else {
       setFilteredSubjectList(subjectList); // Mostra todos se nenhuma escola estiver selecionada
     }
@@ -505,6 +657,79 @@ const ScheduleView = () => {
     setEvents(filtered);
   };
 
+  // Funções que permitem a repetição de semanas:
+  const [visibleRange, setVisibleRange] = useState({ start: null, end: null });
+
+  // Modify the handleDatesSet function to avoid infinite loop
+const handleDatesSet = (arg) => {
+  // Only update state if the range has actually changed
+  if (!visibleRange.start || !visibleRange.end ||
+      visibleRange.start.getTime() !== arg.start.getTime() ||
+      visibleRange.end.getTime() !== arg.end.getTime()) {
+    setVisibleRange({
+      start: arg.start,
+      end: arg.end,
+    });
+  }
+};
+
+  const repeatCurrentWeek = async () => {
+    if (!visibleRange.start || !visibleRange.end) {
+      alert("Semana visível não encontrada.");
+      return;
+    }
+    // Só os eventos da semana visível
+    const weekEvents = events.filter((event) => {
+      const eventDate = new Date(event.start);
+      return eventDate >= visibleRange.start && eventDate < visibleRange.end;
+    });
+
+    if (weekEvents.length === 0) {
+      alert("Não há blocos para repetir nesta semana.");
+      return;
+    }
+    setLoading(true);
+    try {
+      for (const event of weekEvents) {
+        const startDate = new Date(event.start);
+        const endDate = new Date(event.end);
+
+        startDate.setDate(startDate.getDate() + 7);
+        endDate.setDate(endDate.getDate() + 7);
+
+        const formatDate = (date) => {
+          const year = date.getFullYear();
+          const month = (date.getMonth() + 1).toString().padStart(2, "0");
+          const day = date.getDate().toString().padStart(2, "0");
+          return `${year}-${month}-${day}`;
+        };
+        const formatTime = (date) => {
+          const hours = date.getHours().toString().padStart(2, "0");
+          const minutes = date.getMinutes().toString().padStart(2, "0");
+          return `${hours}:${minutes}:00`;
+        };
+
+        const novoBloco = {
+          horaInicio: formatTime(startDate),
+          horaFim: formatTime(endDate),
+          dia: formatDate(startDate),
+          professorFK: event.extendedProps.teacherId,
+          unidadeCurricularFK: event.extendedProps.subjectId,
+          salaFK: event.extendedProps.roomId,
+          turmaFK: event.extendedProps.classId || 1,
+        };
+
+        await blocoHorarioService.create(novoBloco);
+      }
+      await fetchBlocos();
+      alert("Blocos da semana visível repetidos para a próxima semana!");
+    } catch (error) {
+      alert("Erro ao repetir blocos.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="container">
       {/* Sidebar só para NÃO docentes */}
@@ -526,6 +751,43 @@ const ScheduleView = () => {
             onClick={() => history.push("/upload-data")}
           >
             Upload Data
+          </button>
+
+          <button
+            style={{
+              width: "100%",
+              marginBottom: 16,
+              background: "#57BB4C",
+              color: "white",
+              fontWeight: "bold",
+              fontSize: "1rem",
+              border: "none",
+              borderRadius: 4,
+              padding: "10px 0",
+              cursor: "pointer",
+            }}
+            onClick={repeatCurrentWeek}
+            disabled={loading}
+          >
+            Repetir Semana Visível
+          </button>
+
+          <button
+            style={{
+              width: "100%",
+              marginBottom: 16,
+              background: "#1976d2",
+              color: "white",
+              fontWeight: "bold",
+              fontSize: "1rem",
+              border: "none",
+              borderRadius: 4,
+              padding: "10px 0",
+              cursor: "pointer",
+            }}
+            onClick={() => exportScheduleToPDF(events)}
+          >
+            Exportar Horário para PDF
           </button>
           <h2>Hierarquia</h2>
 
@@ -693,31 +955,6 @@ const ScheduleView = () => {
               )}
             </select>
           </div>
-
-          <div className="blocks-preview">
-            <h3>Blocos Atuais</h3>
-            <p className="instructions">
-              Preencha os campos acima e clique no calendário para criar um
-              bloco
-            </p>
-            <div className="events-list">
-              {events.length > 0 ? (
-                events.map((event) => (
-                  <div key={event.id} className="event-item">
-                    <span>{event.title}</span>
-                    <button
-                      className="delete-event-btn"
-                      onClick={() => handleDeleteEvent(event.id)}
-                    >
-                      x
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <p>Nenhum bloco criado ainda</p>
-              )}
-            </div>
-          </div>
         </div>
       )}
       <div className="ScheduleView">
@@ -733,6 +970,7 @@ const ScheduleView = () => {
           }}
           slotMinTime="08:30:00"
           slotMaxTime="24:00:00"
+          datesSet={handleDatesSet}
           allDaySlot={false}
           events={events}
           editable={true}
@@ -742,6 +980,16 @@ const ScheduleView = () => {
           slotDuration="00:30:00"
           slotLabelInterval="00:30:00"
           slotLabelContent={slotLabelFormatter}
+          hiddenDays={[0]} /* Oculta o domingo (0 = domingo) */
+          /* Adiciona um listener para o clique direito (context menu) */
+          eventDidMount={(info) => {
+            info.el.addEventListener('contextmenu', (e) => {
+              e.preventDefault(); // Previne o menu de contexto padrão
+              if (window.confirm("Deseja excluir este bloco horário?")) {
+                handleDeleteEvent(info.event.id);
+              }
+            });
+          }}
           eventContent={(eventInfo) => {
             return (
               <div>

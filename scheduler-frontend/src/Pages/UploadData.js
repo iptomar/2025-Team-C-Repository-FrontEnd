@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import '../Styles/UploadData.css';
+import excelUploadService from '../services/excelUploadService';
 
 function UploadData() {
   const [sheetsData, setSheetsData] = useState({});
@@ -133,9 +134,14 @@ function UploadData() {
         <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '32px' }}>
           <button
             className="send-sheet-btn"
-            onClick={() => {
+            onClick={async () => {
               if (window.confirm(`Tem a certeza que quer carregar a folha "${selectedSheet}" na base de dados?`)) {
-                //TODO: lógica de envio aqui
+                try {
+                  await excelUploadService.upload({ [selectedSheet]: sheetsData[selectedSheet] });
+                  alert('Folha carregada com sucesso!');
+                } catch (e) {
+                  alert('Erro ao carregar folha!');
+                }
               }
             }}
           >
@@ -143,9 +149,14 @@ function UploadData() {
           </button>
           <button
             className="send-all-btn"
-            onClick={() => {
+            onClick={async () => {
               if (window.confirm('Tem a certeza que quer carregar todas as folhas na base de dados?')) {
-                //TODO: lógica de envio aqui
+                try {
+                  await excelUploadService.upload(sheetsData);
+                  alert('Todas as folhas carregadas com sucesso!');
+                } catch (e) {
+                  alert('Erro ao carregar folhas!');
+                }
               }
             }}
           >
