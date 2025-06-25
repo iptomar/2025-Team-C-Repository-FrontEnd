@@ -20,7 +20,6 @@ import Popup from "../Components/Popup";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-
 const ScheduleView = () => {
   // Novo estado para guardar info do utilizador autenticado
   const [userRole, setUserRole] = useState("");
@@ -36,6 +35,7 @@ const ScheduleView = () => {
   const [teacher, setTeacher] = useState("");
   const [room, setRoom] = useState("");
   const [subject, setSubject] = useState("");
+  const [selectedClass, setSelectedClass] = useState(""); // Novo estado para turma selecionada
   const [classList, setClassList] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -45,10 +45,9 @@ const ScheduleView = () => {
   const [classFilter, setClassFilter] = useState("");
 
   // Lista - Dropdowns
-
   
   //Evento a ser eliminado
-const [deleteConfirm, setDeleteConfirm] = useState({ open: false, eventId: null });
+  const [deleteConfirm, setDeleteConfirm] = useState({ open: false, eventId: null });
   
   // Popup para mensagens de erro
   const [popup, setPopup] = useState({ open: false, message: "" });
@@ -59,6 +58,7 @@ const [deleteConfirm, setDeleteConfirm] = useState({ open: false, eventId: null 
 
   const [filteredDegreeList, setFilteredDegreeList] = useState([]); // Lista de cursos após selecionar escola
   const [filteredSubjectList, setFilteredSubjectList] = useState([]); // Lista de UCs após selecionar curso
+  const [filteredClassList, setFilteredClassList] = useState([]); // Lista de turmas após selecionar curso
 
   // Criação de blocos
   const [teacherList, setTeacherList] = useState([]);
@@ -206,8 +206,9 @@ const [deleteConfirm, setDeleteConfirm] = useState({ open: false, eventId: null 
         .map((turma) => ({
           idTurma: turma.idTurma,
           nome: turma.nome,
+          cursoFK: turma.cursoFK || turma.CursoFK, // Suporte para ambos os nomes de propriedade
         }))
-        .sort((a, b) => a.id - b.id); // Ordenar por id de forma crescente
+        .sort((a, b) => a.idTurma - b.idTurma); // Ordenar por idTurma de forma crescente
       setClassList(turmas);
     } catch (error) {
       console.error("Erro ao buscar turmas:", error);
@@ -336,68 +337,66 @@ const [deleteConfirm, setDeleteConfirm] = useState({ open: false, eventId: null 
   ]);
 
   // Método de criação de um bloco horário
-  // Este método é chamado quando o utilizador clica em uma data no calendário
-  // Método de criação de um bloco horário
-const handleDateClick = async (info) => {
-  // aceitar criação de blocos apenas se todos os campos estiverem preenchidos
-  if (teacher && room && subject) {
-    try {
-      // criar um horário de início corretamente alinhado a partir da data clicada
-      const clickTime = new Date(info.dateStr);
+  const handleDateClick = async (info) => {
+    // aceitar criação de blocos apenas se todos os campos estiverem preenchidos
+    if (teacher && room && subject && selectedClass) {
+      try {
+        // criar um horário de início corretamente alinhado a partir da data clicada
+        const clickTime = new Date(info.dateStr);
 
-      // criar um horário de fim 2 horas após o horário de início
-      const endTime = new Date(clickTime);
-      endTime.setHours(endTime.getHours() + 2);
+        // criar um horário de fim 2 horas após o horário de início
+        const endTime = new Date(clickTime);
+        endTime.setHours(endTime.getHours() + 2);
 
-      // Formatar data para YYYY-MM-DD
-      const formatDate = (date) => {
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, "0");
-        const day = date.getDate().toString().padStart(2, "0");
-        return `${year}-${month}-${day}`;
-      };
+        // Formatar data para YYYY-MM-DD
+        const formatDate = (date) => {
+          const year = date.getFullYear();
+          const month = (date.getMonth() + 1).toString().padStart(2, "0");
+          const day = date.getDate().toString().padStart(2, "0");
+          return `${year}-${month}-${day}`;
+        };
 
-      // formatar horas para o formato esperado pela API (HH:MM:SS)
-      const formatTime = (data) => {
-        const horas = data.getHours().toString().padStart(2, "0");
-        const minutos = data.getMinutes().toString().padStart(2, "0");
-        return `${horas}:${minutos}:00`;
-      };
+        // formatar horas para o formato esperado pela API (HH:MM:SS)
+        const formatTime = (data) => {
+          const horas = data.getHours().toString().padStart(2, "0");
+          const minutos = data.getMinutes().toString().padStart(2, "0");
+          return `${horas}:${minutos}:00`;
+        };
 
-      // Preparar dados para enviar à API
-      const novoBloco = {
-        horaInicio: formatTime(clickTime),
-        horaFim: formatTime(endTime),
-        dia: formatDate(clickTime),
-        professorFK: teacher,
-        unidadeCurricularFK: subject,
-        salaFK: room,
-        turmaFK: 1, // Ainda não implementado, usar 1 como placeholder
-      };
+        // Preparar dados para enviar à API
+        const novoBloco = {
+          horaInicio: formatTime(clickTime),
+          horaFim: formatTime(endTime),
+          dia: formatDate(clickTime),
+          professorFK: teacher,
+          unidadeCurricularFK: subject,
+          salaFK: room,
+          turmaFK: selectedClass, // Usar a turma selecionada
+        };
 
-      // Enviar requisição POST para a API
-      await blocoHorarioService.create(novoBloco);
-      
-    } catch (error) {
-      // Verificar o tipo de erro e mostrar mensagem apropriada
-      let errorMessage = "Erro ao criar bloco horário.";
-      
-      if (error.response) {
-        if (error.response.status === 400) {
-          errorMessage = "Conflito de horário: Este professor já tem aula marcada neste horário ou está no horário de refeição.";
-        } else if (error.response.data) {
-          // Se a API retornou uma mensagem específica
-          errorMessage = `Erro: ${error.response.data}`;
+        // Enviar requisição POST para a API
+        await blocoHorarioService.create(novoBloco);
+        
+      } catch (error) {
+        // Verificar o tipo de erro e mostrar mensagem apropriada
+        let errorMessage = "Erro ao criar bloco horário.";
+        
+        if (error.response) {
+          if (error.response.status === 400) {
+            errorMessage = "Conflito de horário: Este professor já tem aula marcada neste horário ou está no horário de refeição.";
+          } else if (error.response.data) {
+            // Se a API retornou uma mensagem específica
+            errorMessage = `Erro: ${error.response.data}`;
+          }
         }
+        
+        setPopup({ open: true, message: errorMessage });
+        return;
       }
-      
-      setPopup({ open: true, message: errorMessage });
-      return;
+    } else {
+      setPopup({ open: true, message: "Por favor, preencha todos os campos, incluindo a turma." });
     }
-  } else {
-    setPopup({ open: true, message: "Por favor, preencha todos os campos." });
-  }
-};
+  };
 
   // Método para lidar com o arrastar/redimensionar de um bloco
   const handleEventEdit = async (info) => {
@@ -436,55 +435,55 @@ const handleDateClick = async (info) => {
     };
 
     // Enviar requisição PUT para a API
-try {
-  const response = await blocoHorarioService.update(
-    eventId,
-    blocoAtualizado
-  );
-  if (!(response.status === 200 || response.status === 204)) {
-    setPopup({ open: true, message: "Erro ao atualizar bloco na API." });
-    info.revert();
-  }
-} catch (error) {
-  // Verificar o tipo de erro e mostrar mensagem apropriada
-  let errorMessage = "Erro ao atualizar bloco horário.";
-  
-  if (error.response) {
-    if (error.response.status === 400) {
-      errorMessage = "Conflito de horário: Este professor já tem aula marcada neste horário ou está no horário de refeição.";
-    } else if (error.response.data) {
-      // Se a API retornou uma mensagem específica
-      errorMessage = `Erro: ${error.response.data}`;
+    try {
+      const response = await blocoHorarioService.update(
+        eventId,
+        blocoAtualizado
+      );
+      if (!(response.status === 200 || response.status === 204)) {
+        setPopup({ open: true, message: "Erro ao atualizar bloco na API." });
+        info.revert();
+      }
+    } catch (error) {
+      // Verificar o tipo de erro e mostrar mensagem apropriada
+      let errorMessage = "Erro ao atualizar bloco horário.";
+      
+      if (error.response) {
+        if (error.response.status === 400) {
+          errorMessage = "Conflito de horário: Este professor já tem aula marcada neste horário ou está no horário de refeição.";
+        } else if (error.response.data) {
+          // Se a API retornou uma mensagem específica
+          errorMessage = `Erro: ${error.response.data}`;
+        }
+      }
+      
+      setPopup({ open: true, message: errorMessage });
+      info.revert();
     }
-  }
-  
-  setPopup({ open: true, message: errorMessage });
-  info.revert();
-}
   };
 
   // Método para lidar com a exclusão de um bloco
   const handleDeleteEvent = async (eventId) => {
-  try {
-    // Apagar o bloco
-    const response = await blocoHorarioService.delete(eventId);
-    // Tratar o estado da resposta
-    if (!(response.status === 200 || response.status === 204)) {
-      setPopup({ open: true, message: "Erro ao excluir bloco." });
-    } else {
-      // Mensagem de sucesso
-      setPopup({ open: true, message: "Bloco excluído com sucesso!" });
+    try {
+      // Apagar o bloco
+      const response = await blocoHorarioService.delete(eventId);
+      // Tratar o estado da resposta
+      if (!(response.status === 200 || response.status === 204)) {
+        setPopup({ open: true, message: "Erro ao excluir bloco." });
+      } else {
+        // Mensagem de sucesso
+        setPopup({ open: true, message: "Bloco excluído com sucesso!" });
+      }
+    } catch (error) {
+      let errorMessage = "Erro ao excluir bloco.";
+      
+      if (error.response && error.response.data) {
+        errorMessage = `Erro: ${error.response.data}`;
+      }
+      
+      setPopup({ open: true, message: errorMessage });
     }
-  } catch (error) {
-    let errorMessage = "Erro ao excluir bloco.";
-    
-    if (error.response && error.response.data) {
-      errorMessage = `Erro: ${error.response.data}`;
-    }
-    
-    setPopup({ open: true, message: errorMessage });
-  }
-};
+  };
 
   // Método para formatar o rótulo do slot
   const slotLabelFormatter = (slotInfo) => {
@@ -664,9 +663,15 @@ try {
           (subject) => String(subject.cursoFK) === String(selectedDegree)
         )
       );
-      console.log(filteredSubjectList);
+      // Filtrar turmas pelo curso selecionado
+      setFilteredClassList(
+        classList.filter(
+          (turma) => String(turma.cursoFK) === String(selectedDegree)
+        )
+      );
     } else {
       setFilteredSubjectList(subjectList); // Mostra todos se nenhuma escola estiver selecionada
+      setFilteredClassList(classList); // Mostra todas as turmas se nenhum curso estiver selecionado
     }
 
     // Filtrar por docente
@@ -698,17 +703,17 @@ try {
   const [visibleRange, setVisibleRange] = useState({ start: null, end: null });
 
   // Modify the handleDatesSet function to avoid infinite loop
-const handleDatesSet = (arg) => {
-  // Only update state if the range has actually changed
-  if (!visibleRange.start || !visibleRange.end ||
-      visibleRange.start.getTime() !== arg.start.getTime() ||
-      visibleRange.end.getTime() !== arg.end.getTime()) {
-    setVisibleRange({
-      start: arg.start,
-      end: arg.end,
-    });
-  }
-};
+  const handleDatesSet = (arg) => {
+    // Only update state if the range has actually changed
+    if (!visibleRange.start || !visibleRange.end ||
+        visibleRange.start.getTime() !== arg.start.getTime() ||
+        visibleRange.end.getTime() !== arg.end.getTime()) {
+      setVisibleRange({
+        start: arg.start,
+        end: arg.end,
+      });
+    }
+  };
 
   const repeatCurrentWeek = async () => {
     if (!visibleRange.start || !visibleRange.end) {
